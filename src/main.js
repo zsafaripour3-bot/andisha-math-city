@@ -513,3 +513,223 @@ app.addEventListener("click", function(event) {
 });
 
 showWelcome();
+
+/* 🎵 ANDISHA MUSIC STUDIO */
+(function () {
+  const KEY = "andishaMusic";
+  const TRACK_KEY = "andishaTrack";
+  const VOLUME_KEY = "andishaVolume";
+
+  let enabled = localStorage.getItem(KEY) !== "false";
+  let track = Number(localStorage.getItem(TRACK_KEY)) || 0;
+  let volume = Number(localStorage.getItem(VOLUME_KEY) || 35);
+
+  let audio = null;
+  let master = null;
+  let musicTimer = null;
+  let noteIndex = 0;
+
+  const tracks = [
+    {
+      name: "🎹 آرام و دلنشین",
+      notes: [392, 440, 523, 440, 392, 330, 392, 440]
+    },
+    {
+      name: "🎮 شاد و کودکانه",
+      notes: [523, 659, 784, 659, 587, 698, 880, 698]
+    },
+    {
+      name: "🚀 ماجراجویی قهرمان",
+      notes: [330, 392, 494, 587, 494, 659, 587, 494]
+    }
+  ];
+
+  function setupAudio() {
+    if (audio) {
+      if (audio.state === "suspended") audio.resume();
+      return;
+    }
+
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (!Audio) return;
+
+    audio = new Audio();
+    master = audio.createGain();
+    master.gain.value = volume / 100;
+    master.connect(audio.destination);
+  }
+
+  function tone(freq, duration, type, strength) {
+    if (!audio || !master || !enabled) return;
+
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+
+    osc.type = type || "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(strength || 0.12, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      audio.currentTime + duration
+    );
+
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start();
+    osc.stop(audio.currentTime + duration);
+  }
+
+  function startMusic() {
+    if (!enabled) return;
+
+    setupAudio();
+    if (!audio) return;
+
+    if (musicTimer) clearInterval(musicTimer);
+
+    noteIndex = 0;
+
+    const melody = tracks[track].notes;
+
+    musicTimer = setInterval(function () {
+      if (!enabled || !audio) return;
+
+      const freq = melody[noteIndex % melody.length];
+      tone(freq, 0.24, "triangle", 0.055);
+      noteIndex++;
+    }, 330);
+  }
+
+  function stopMusic() {
+    if (musicTimer) clearInterval(musicTimer);
+    musicTimer = null;
+  }
+
+  function correctSound() {
+    tone(659, 0.15, "sine", 0.16);
+    setTimeout(() => tone(784, 0.2, "sine", 0.16), 120);
+    setTimeout(() => tone(988, 0.3, "sine", 0.16), 250);
+  }
+
+  function wrongSound() {
+    tone(240, 0.22, "triangle", 0.12);
+    setTimeout(() => tone(190, 0.25, "triangle", 0.10), 150);
+  }
+
+  function makePanel() {
+    const panel = document.createElement("div");
+
+    panel.id = "andisha-music-panel";
+
+    panel.innerHTML = `
+      <button id="music-toggle" type="button">
+        ${enabled ? "🔊 صدا روشن" : "🔇 صدا خاموش"}
+      </button>
+
+      <select id="music-track" aria-label="انتخاب موسیقی">
+        ${tracks.map((t, i) =>
+          `<option value="${i}" ${i === track ? "selected" : ""}>
+            ${t.name}
+          </option>`
+        ).join("")}
+      </select>
+
+      <label for="music-volume">🔉 بلندی صدا</label>
+      <input id="music-volume" type="range"
+        min="0" max="100" value="${volume}">
+    `;
+
+    panel.style.cssText = `
+      position:fixed;
+      bottom:12px;
+      left:10px;
+      z-index:99999;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      padding:10px;
+      max-width:calc(100% - 20px);
+      border-radius:16px;
+      background:#142b52;
+      border:2px solid #f5c75e;
+      box-shadow:0 5px 20px #0005;
+      color:white;
+      font:13px Tahoma,sans-serif;
+    `;
+
+    panel.querySelectorAll("button,select").forEach(el => {
+      el.style.cssText = `
+        padding:8px;
+        border-radius:9px;
+        border:0;
+        font:13px Tahoma,sans-serif;
+        max-width:100%;
+      `;
+    });
+
+    panel.querySelector("label").style.fontWeight = "bold";
+    document.body.appendChild(panel);
+
+    const toggle = document.getElementById("music-toggle");
+    const selector = document.getElementById("music-track");
+    const slider = document.getElementById("music-volume");
+
+    toggle.addEventListener("click", function () {
+      enabled = !enabled;
+      localStorage.setItem(KEY, String(enabled));
+      toggle.textContent = enabled ? "🔊 صدا روشن" : "🔇 صدا خاموش";
+
+      if (enabled) startMusic();
+      else stopMusic();
+    });
+
+    selector.addEventListener("change", function () {
+      track = Number(selector.value);
+      localStorage.setItem(TRACK_KEY, String(track));
+      if (enabled) startMusic();
+    });
+
+    slider.addEventListener("input", function () {
+      volume = Number(slider.value);
+      localStorage.setItem(VOLUME_KEY, String(volume));
+
+      if (master) master.gain.value = volume / 100;
+    });
+  }
+
+  document.addEventListener("click", function (event) {
+    const button = event.target.closest("button");
+
+    if (!button) return;
+
+    if (enabled) {
+      setupAudio();
+      startMusic();
+    }
+
+    if (!button.dataset.action) return;
+
+    const action = button.dataset.action;
+    const answer = Number(button.dataset.answer);
+    let expected = null;
+
+    if (action === "shop-answer") expected = 150000;
+    if (action === "kitchen-answer") expected = 4;
+    if (action === "bank-answer") expected = 50000;
+    if (action === "map-answer") expected = 14;
+
+    if (action === "tower-answer" &&
+        typeof towerQuestions !== "undefined") {
+      expected = towerQuestions[towerStep].answer;
+    }
+
+    if (expected !== null) {
+      if (answer === expected) correctSound();
+      else wrongSound();
+    }
+  }, true);
+
+  makePanel();
+})();
