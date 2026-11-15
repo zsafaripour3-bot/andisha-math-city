@@ -1,7 +1,7 @@
 
 const app = document.getElementById("app");
 
-// بازیابی اطلاعات ذخیره‌شده
+// بازیابی اطلاعات
 let score = Number(localStorage.getItem("andishaScore")) || 0;
 let shopCompleted =
   localStorage.getItem("andishaShopCompleted") === "true";
@@ -26,6 +26,14 @@ function saveProgress() {
   localStorage.setItem("andishaShopCompleted", String(shopCompleted));
 }
 
+// اتصال یکپارچه دکمه‌ها
+function setAction(id, action) {
+  const button = document.getElementById(id);
+  if (button) {
+    button.onclick = action;
+  }
+}
+
 function showWelcome() {
   app.innerHTML = `
     <main dir="rtl">
@@ -36,8 +44,7 @@ function showWelcome() {
     </main>
   `;
 
-  document.getElementById("startBtn")
-    .addEventListener("click", showStory);
+  setAction("startBtn", showStory);
 }
 
 function showStory() {
@@ -52,8 +59,7 @@ function showStory() {
     </main>
   `;
 
-  document.getElementById("enterBtn")
-    .addEventListener("click", showCity);
+  setAction("enterBtn", showCity);
 }
 
 function showCity() {
@@ -85,15 +91,15 @@ function showCity() {
   `;
 
   app.querySelectorAll(".zone-btn").forEach(button => {
-    button.addEventListener("click", () => {
-      const index = Number(button.dataset.zone);
+    button.onclick = function () {
+      const index = Number(this.dataset.zone);
 
       if (index === 0) {
         showShop();
       } else {
         showComingSoon(index);
       }
-    });
+    };
   });
 }
 
@@ -113,8 +119,7 @@ function showShop() {
       </main>
     `;
 
-    document.getElementById("mapBtn")
-      .addEventListener("click", showCity);
+    setAction("mapBtn", showCity);
     return;
   }
 
@@ -128,15 +133,9 @@ function showShop() {
       <h3>قیمت نهایی کیف چقدر است؟</h3>
 
       <div class="shop-options">
-        <button class="answer-btn" data-answer="150000">
-          ۱۵۰٬۰۰۰ تومان
-        </button>
-        <button class="answer-btn" data-answer="175000">
-          ۱۷۵٬۰۰۰ تومان
-        </button>
-        <button class="answer-btn" data-answer="125000">
-          ۱۲۵٬۰۰۰ تومان
-        </button>
+        <button class="answer-btn" data-answer="150000">۱۵۰٬۰۰۰ تومان</button>
+        <button class="answer-btn" data-answer="175000">۱۷۵٬۰۰۰ تومان</button>
+        <button class="answer-btn" data-answer="125000">۱۲۵٬۰۰۰ تومان</button>
       </div>
 
       <p id="feedback">یکی از پاسخ‌ها را انتخاب کن.</p>
@@ -146,13 +145,12 @@ function showShop() {
   `;
 
   app.querySelectorAll(".answer-btn").forEach(button => {
-    button.addEventListener("click", () => {
-      checkShopAnswer(Number(button.dataset.answer));
-    });
+    button.onclick = function () {
+      checkShopAnswer(Number(this.dataset.answer));
+    };
   });
 
-  document.getElementById("mapBtn")
-    .addEventListener("click", showCity);
+  setAction("mapBtn", showCity);
 }
 
 function checkShopAnswer(answer) {
@@ -217,8 +215,7 @@ function showComingSoon(index) {
     </main>
   `;
 
-  document.getElementById("backBtn")
-    .addEventListener("click", showCity);
+  setAction("backBtn", showCity);
 }
 
 showWelcome();
