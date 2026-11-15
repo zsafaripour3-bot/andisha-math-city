@@ -870,3 +870,48 @@ showWelcome();
     status.textContent = "برای شروع، دکمه روشن کردن را بزنید";
   }
 })();
+
+/* 🎧 انتخاب موسیقی از گوشی */
+(function () {
+  const panel = document.getElementById("andishaMusicStudio");
+  if (!panel || document.getElementById("andishaPhoneMusic")) return;
+
+  const section = document.createElement("div");
+  section.id = "andishaPhoneMusic";
+  section.style.cssText =
+    "margin-top:15px;padding:14px;background:#ffffff18;border-radius:14px";
+
+  section.innerHTML = `
+    <h3>🎧 موسیقی دلخواه من</h3>
+    <p>از گوشی خودت یک فایل موسیقی انتخاب کن:</p>
+    <input id="andishaMusicFile" type="file"
+      accept="audio/*" style="max-width:100%;color:white">
+    <audio id="andishaPhonePlayer" controls
+      style="width:100%;margin-top:12px"></audio>
+    <p id="andishaPhoneMessage">هنوز آهنگی انتخاب نشده است.</p>
+  `;
+
+  panel.appendChild(section);
+
+  const picker = document.getElementById("andishaMusicFile");
+  const player = document.getElementById("andishaPhonePlayer");
+  const message = document.getElementById("andishaPhoneMessage");
+  let oldURL = null;
+
+  picker.addEventListener("change", function () {
+    const file = picker.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("audio/")) {
+      message.textContent = "لطفاً یک فایل صوتی انتخاب کن.";
+      return;
+    }
+
+    if (oldURL) URL.revokeObjectURL(oldURL);
+    oldURL = URL.createObjectURL(file);
+
+    player.src = oldURL;
+    player.load();
+    message.textContent = "🎵 آهنگ انتخاب شد؛ دکمه پخش را بزن!";
+  });
+})();
