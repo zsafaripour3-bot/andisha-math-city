@@ -987,3 +987,75 @@ showWelcome();
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   });
 })();
+/* 🎙️ ANDISHA FLOATING VOICE GUIDE */
+(function () {
+  if (document.getElementById("andishaVoiceGuide")) return;
+
+  const guide = document.createElement("div");
+  guide.id = "andishaVoiceGuide";
+  guide.dir = "rtl";
+
+  guide.style.cssText = `
+    position:fixed;
+    right:10px;
+    bottom:85px;
+    z-index:100000;
+    background:#142b52;
+    color:white;
+    padding:12px;
+    border:2px solid #f5c75e;
+    border-radius:16px;
+    text-align:center;
+    font-family:Tahoma;
+    max-width:220px;
+  `;
+
+  guide.innerHTML = `
+    <div style="font-weight:bold;margin-bottom:8px">
+      🎙️ راهنمای صوتی اندیشا
+    </div>
+    <button id="andishaRead" style="padding:10px;border:0;border-radius:10px;background:#f5c75e;color:#142b52">
+      🔊 راهنمای این صفحه
+    </button>
+    <button id="andishaStop" style="padding:10px;border:0;border-radius:10px;margin-top:6px">
+      ⏹ توقف
+    </button>
+    <p id="andishaVoiceStatus">آماده‌ام قهرمان!</p>
+  `;
+
+  document.body.appendChild(guide);
+
+  const status = document.getElementById("andishaVoiceStatus");
+
+  document.getElementById("andishaRead").onclick = function () {
+    if (!("speechSynthesis" in window)) {
+      status.textContent = "مرورگر از صدا پشتیبانی نمی‌کند.";
+      return;
+    }
+
+    speechSynthesis.cancel();
+
+    const main = document.querySelector("#app main");
+    const message = main ? main.innerText.trim() : "";
+
+    if (!message) {
+      status.textContent = "ابتدا وارد یک مأموریت شو.";
+      return;
+    }
+
+    const speech = new SpeechSynthesisUtterance(message);
+    speech.lang = "fa-IR";
+    speech.rate = 0.9;
+
+    speech.onstart = () => status.textContent = "🔊 در حال خواندن...";
+    speech.onend = () => status.textContent = "تمام شد قهرمان! 🌟";
+    speech.onerror = () => status.textContent = "صدای فارسی گوشی را بررسی کن.";
+
+    speechSynthesis.speak(speech);
+  };
+
+  document.getElementById("andishaStop").onclick = function () {
+    speechSynthesis.cancel();
+    status.textContent = "صدا متوقف شد.";
+  };
+})();
