@@ -20,10 +20,8 @@ function showStory() {
       <h1>🌟 آغاز یک مأموریت بزرگ</h1>
       <h2>👧 آوا و 🤖 اندی</h2>
       <p>سلام قهرمان! من آوا هستم، مهندس کوچک شهرک.</p>
-      <p>🤖 اندی: کمک! شهرک هوشمند ما به‌هم‌ریخته است.
-      برای بازسازی آن به دانش ریاضی تو نیاز داریم!</p>
-      <p>آوا: با حل معماهای تناسب و درصد می‌توانیم
-      پنج منطقه شهرک را دوباره آباد کنیم.</p>
+      <p>🤖 اندی: شهرک هوشمند ما به کمک تو نیاز دارد!</p>
+      <p>با حل معماهای ریاضی، پنج منطقه را آباد می‌کنیم.</p>
       <h3>آماده‌ای قهرمان؟</h3>
       <button id="enterBtn">ورود به شهرک 🏙️</button>
     </main>
@@ -32,15 +30,15 @@ function showStory() {
   document.getElementById("enterBtn").addEventListener("click", showCity);
 }
 
-function showCity() {
-  const zones = [
-    { icon: "🛍️", name: "فروشگاه هوشمند", color: "#e7a23b", mission: "تخفیف و قیمت نهایی" },
-    { icon: "🍰", name: "آشپزخانه مرکزی", color: "#e77b9c", mission: "تناسب در دستور غذا" },
-    { icon: "🏦", name: "بانک اندیشا", color: "#43b9a0", mission: "درصد و سود ساده" },
-    { icon: "📐", name: "کارگاه نقشه‌سازی", color: "#6499e8", mission: "مقیاس و تناسب" },
-    { icon: "🏆", name: "برج هوشمند", color: "#a78ae8", mission: "چالش نهایی ریاضی" }
-  ];
+const zones = [
+  { icon: "🛍️", name: "فروشگاه هوشمند", color: "#e7a23b", mission: "تخفیف و قیمت نهایی" },
+  { icon: "🍰", name: "آشپزخانه مرکزی", color: "#e77b9c", mission: "تناسب در دستور غذا" },
+  { icon: "🏦", name: "بانک اندیشا", color: "#43b9a0", mission: "درصد و سود ساده" },
+  { icon: "📐", name: "کارگاه نقشه‌سازی", color: "#6499e8", mission: "مقیاس و تناسب" },
+  { icon: "🏆", name: "برج هوشمند", color: "#a78ae8", mission: "چالش نهایی ریاضی" }
+];
 
+function showCity() {
   app.innerHTML = `
     <main dir="rtl">
       <h1>🏙️ شهرک هوشمند اندیشا</h1>
@@ -53,7 +51,9 @@ function showCity() {
             <div class="building-icon">${zone.icon}</div>
             <h2>${zone.name}</h2>
             <p>${zone.mission}</p>
-            <button onclick="openZone(${i})">ورود به منطقه 🚀</button>
+            <button class="zone-btn" data-zone="${i}">
+              ورود به منطقه 🚀
+            </button>
           </article>
         `).join("")}
       </section>
@@ -61,25 +61,30 @@ function showCity() {
       <p>⭐ پنج منطقه، پنج مأموریت، یک قهرمان!</p>
     </main>
   `;
+
+  app.querySelectorAll(".zone-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.zone);
+      openZone(index);
+    });
+  });
 }
 
 function openZone(index) {
-  const names = [
-    "فروشگاه هوشمند",
-    "آشپزخانه مرکزی",
-    "بانک اندیشا",
-    "کارگاه نقشه‌سازی",
-    "برج هوشمند"
-  ];
+  const zone = zones[index];
+  if (!zone) return;
 
   app.innerHTML = `
     <main dir="rtl">
-      <h1>${names[index]}</h1>
+      <h1>${zone.icon} ${zone.name}</h1>
       <h2>🤖 اندی: به منطقه مأموریت خوش آمدی!</h2>
+      <p>${zone.mission}</p>
       <p>این منطقه به‌زودی با یک بازی ریاضی جذاب فعال می‌شود.</p>
-      <button onclick="showCity()">بازگشت به نقشه شهرک 🏙️</button>
+      <button id="backBtn">بازگشت به نقشه شهرک 🏙️</button>
     </main>
   `;
+
+  document.getElementById("backBtn").addEventListener("click", showCity);
 }
 
 showWelcome();
