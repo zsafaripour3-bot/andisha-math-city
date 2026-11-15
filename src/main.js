@@ -11,11 +11,13 @@ let shopCompleted = localStorage.getItem("andishaShopCompleted") === "true";
 let kitchenCompleted = localStorage.getItem("andishaKitchenCompleted") === "true";
 let bankCompleted = localStorage.getItem("andishaBankCompleted") === "true";
 let mapCompleted = localStorage.getItem("andishaMapCompleted") === "true";
+let towerCompleted = localStorage.getItem("andishaTowerCompleted") === "true";
 
 let shopAttempts = 0;
 let kitchenAttempts = 0;
 let bankAttempts = 0;
 let mapAttempts = 0;
+let towerStep = 0;
 
 const zones = [
   { icon: "🛍️", name: "فروشگاه هوشمند", mission: "تخفیف و قیمت نهایی", color: "#e7a23b" },
@@ -31,6 +33,7 @@ function saveProgress() {
   localStorage.setItem("andishaKitchenCompleted", String(kitchenCompleted));
   localStorage.setItem("andishaBankCompleted", String(bankCompleted));
   localStorage.setItem("andishaMapCompleted", String(mapCompleted));
+  localStorage.setItem("andishaTowerCompleted", String(towerCompleted));
 }
 
 function loadProgress() {
@@ -39,6 +42,7 @@ function loadProgress() {
   kitchenCompleted = localStorage.getItem("andishaKitchenCompleted") === "true";
   bankCompleted = localStorage.getItem("andishaBankCompleted") === "true";
   mapCompleted = localStorage.getItem("andishaMapCompleted") === "true";
+  towerCompleted = localStorage.getItem("andishaTowerCompleted") === "true";
 }
 
 function showWelcome() {
@@ -65,6 +69,7 @@ function showStory() {
 
 function showCity() {
   loadProgress();
+
   app.innerHTML = `
     <main dir="rtl">
       <h1>🏙️ شهرک هوشمند اندیشا</h1>
@@ -74,6 +79,7 @@ function showCity() {
       <p>🍰 آشپزخانه: ${kitchenCompleted ? "تکمیل شده 🎉" : "در انتظار قهرمان"}</p>
       <p>🏦 بانک: ${bankCompleted ? "تکمیل شده 🎉" : "در انتظار قهرمان"}</p>
       <p>📐 نقشه‌سازی: ${mapCompleted ? "تکمیل شده 🎉" : "در انتظار قهرمان"}</p>
+      <p>🏆 برج هوشمند: ${towerCompleted ? "تکمیل شده 🎉" : "در انتظار قهرمان"}</p>
       <section class="city-map">
         ${zones.map((zone, i) => `
           <article class="building" style="border-top:7px solid ${zone.color}">
@@ -88,13 +94,13 @@ function showCity() {
 }
 
 function showShop() {
-  shopAttempts = 0;
   loadProgress();
+  shopAttempts = 0;
 
   if (shopCompleted) {
     app.innerHTML = `
       <main dir="rtl">
-        <h1>🛍️ فروشگاه هوشمند اندیشا</h1>
+        <h1>🛍️ فروشگاه هوشمند</h1>
         <h2>🎉 مأموریت تکمیل شده است!</h2>
         <p>⭐ مجموع امتیاز: ${score}</p>
         <button data-action="city">بازگشت به شهرک 🏙️</button>
@@ -136,26 +142,25 @@ function checkShopAnswer(answer) {
       🎉 آفرین قهرمان!
       <p>۲۵ درصدِ ۲۰۰٬۰۰۰ می‌شود ۵۰٬۰۰۰ تومان.</p>
       <p>۲۰۰٬۰۰۰ − ۵۰٬۰۰۰ = ۱۵۰٬۰۰۰ تومان</p>
-      <h3>🏅 ۱۰ امتیاز گرفتی!</h3>
-      <p>🌟 مأموریت فروشگاه تکمیل شد.</p>`;
+      <h3>🏅 ۱۰ امتیاز گرفتی!</h3>`;
     app.querySelectorAll('[data-action="shop-answer"]').forEach(b => b.disabled = true);
   } else {
     shopAttempts++;
     feedback.innerHTML = shopAttempts === 1
-      ? `🌱 یک بار دیگر فکر کن!<p>۲۵ درصد یعنی یک‌چهارم قیمت کالا.</p><p>اول مقدار تخفیف را پیدا کن.</p>`
-      : `🤖 اندی: ۲۰۰٬۰۰۰ ÷ ۴ = ۵۰٬۰۰۰ تومان تخفیف؛ حالا آن را از قیمت اولیه کم کن.`;
+      ? `🌱 یک بار دیگر فکر کن!<p>۲۵ درصد یعنی یک‌چهارم قیمت کالا.</p>`
+      : `🤖 اندی: ۲۰۰٬۰۰۰ ÷ ۴ = ۵۰٬۰۰۰ تومان تخفیف؛ آن را از قیمت کم کن.`;
   }
 }
 
 function showKitchen() {
-  kitchenAttempts = 0;
   loadProgress();
+  kitchenAttempts = 0;
 
   if (kitchenCompleted) {
     app.innerHTML = `
       <main dir="rtl">
-        <h1>🍰 آشپزخانه مرکزی اندیشا</h1>
-        <h2>🎉 مأموریت دوم تکمیل شده است!</h2>
+        <h1>🍰 آشپزخانه مرکزی</h1>
+        <h2>🎉 مأموریت تکمیل شده است!</h2>
         <p>⭐ مجموع امتیاز: ${score}</p>
         <button data-action="city">بازگشت به شهرک 🏙️</button>
       </main>`;
@@ -166,8 +171,8 @@ function showKitchen() {
     <main dir="rtl">
       <h1>🍰 آشپزخانه مرکزی اندیشا</h1>
       <h2>مأموریت دوم: دستور پخت قهرمانانه!</h2>
-      <p>👧 آوا: برای ۴ نفر به ۲ پیمانه آرد نیاز داریم.</p>
-      <h3>اگر بخواهیم برای ۸ نفر کیک درست کنیم، چند پیمانه آرد لازم داریم؟</h3>
+      <p>برای ۴ نفر به ۲ پیمانه آرد نیاز داریم.</p>
+      <h3>برای ۸ نفر چند پیمانه آرد لازم داریم؟</h3>
       <div class="shop-options">
         <button data-action="kitchen-answer" data-answer="3">۳ پیمانه</button>
         <button data-action="kitchen-answer" data-answer="4">۴ پیمانه</button>
@@ -200,20 +205,20 @@ function checkKitchenAnswer(answer) {
   } else {
     kitchenAttempts++;
     feedback.innerHTML = kitchenAttempts === 1
-      ? `🌱 دوباره فکر کن!<p>تعداد مهمان‌ها دو برابر شده است.</p>`
+      ? `🌱 دوباره فکر کن! تعداد مهمان‌ها دو برابر شده است.`
       : `🤖 اندی: برای ۸ نفر، ۲ × ۲ = ۴ پیمانه آرد لازم داریم.`;
   }
 }
 
 function showBank() {
-  bankAttempts = 0;
   loadProgress();
+  bankAttempts = 0;
 
   if (bankCompleted) {
     app.innerHTML = `
       <main dir="rtl">
         <h1>🏦 بانک اندیشا</h1>
-        <h2>🎉 مأموریت سوم تکمیل شده است!</h2>
+        <h2>🎉 مأموریت تکمیل شده است!</h2>
         <p>⭐ مجموع امتیاز: ${score}</p>
         <button data-action="city">بازگشت به شهرک 🏙️</button>
       </main>`;
@@ -265,15 +270,14 @@ function checkBankAnswer(answer) {
 }
 
 function showMapWorkshop() {
-  mapAttempts = 0;
   loadProgress();
+  mapAttempts = 0;
 
   if (mapCompleted) {
     app.innerHTML = `
       <main dir="rtl">
         <h1>📐 کارگاه نقشه‌سازی</h1>
         <h2>🎉 نقشه شهرک تکمیل شد!</h2>
-        <p>تو توانستی مقیاس نقشه را به فاصله واقعی تبدیل کنی.</p>
         <p>⭐ مجموع امتیاز: ${score}</p>
         <button data-action="city">بازگشت به شهرک 🏙️</button>
       </main>`;
@@ -284,13 +288,9 @@ function showMapWorkshop() {
     <main dir="rtl">
       <h1>📐 کارگاه نقشه‌سازی اندیشا</h1>
       <h2>مأموریت چهارم: طراح شهرک باش!</h2>
-      <p>👧 آوا: قهرمان! باید فاصله مدرسه تا پارک را روی نقشه پیدا کنیم.</p>
-      <section class="map-mission">
-        <h3>🗺️ راهنمای نقشه</h3>
-        <p>هر ۱ سانتی‌متر روی نقشه برابر با ۲ متر در واقعیت است.</p>
-        <p>📏 فاصله مدرسه تا پارک روی نقشه: <strong>۷ سانتی‌متر</strong></p>
-        <h3>فاصله واقعی مدرسه تا پارک چند متر است؟</h3>
-      </section>
+      <p>هر ۱ سانتی‌متر روی نقشه برابر با ۲ متر در واقعیت است.</p>
+      <p>📏 فاصله مدرسه تا پارک روی نقشه: <strong>۷ سانتی‌متر</strong></p>
+      <h3>فاصله واقعی مدرسه تا پارک چند متر است؟</h3>
       <div class="shop-options">
         <button data-action="map-answer" data-answer="12">۱۲ متر</button>
         <button data-action="map-answer" data-answer="14">۱۴ متر</button>
@@ -316,21 +316,148 @@ function checkMapAnswer(answer) {
     scoreElement.textContent = `⭐ امتیاز: ${score}`;
     feedback.innerHTML = `
       🎉 آفرین مهندس شهرک!
-      <p>۷ سانتی‌متر × ۲ متر = ۱۴ متر</p>
-      <p>تو مقیاس نقشه را درست به فاصله واقعی تبدیل کردی.</p>
-      <h3>🏅 ۱۰ امتیاز گرفتی!</h3>
-      <p>📐 کارگاه نقشه‌سازی تکمیل شد!</p>`;
+      <p>۷ × ۲ = ۱۴ متر</p>
+      <h3>🏅 ۱۰ امتیاز گرفتی!</h3>`;
     app.querySelectorAll('[data-action="map-answer"]').forEach(b => b.disabled = true);
   } else {
     mapAttempts++;
     feedback.innerHTML = mapAttempts === 1
-      ? `🌱 راهنمایی اندی: هر سانتی‌متر برابر ۲ متر است. پس ۷ را در ۲ ضرب کن.`
-      : `🤖 اندی: ۷ × ۲ = ۱۴ متر. پاسخ درست ۱۴ متر است.`;
+      ? `🌱 هر سانتی‌متر برابر ۲ متر است. پس ۷ را در ۲ ضرب کن.`
+      : `🤖 اندی: ۷ × ۲ = ۱۴ متر.`;
+  }
+}
+
+const towerQuestions = [
+  {
+    title: "🛍️ قفل اول: راز تخفیف",
+    question: "قیمت یک کیف ۳۰۰٬۰۰۰ تومان است. با تخفیف ۲۰ درصدی، قیمت نهایی چقدر می‌شود؟",
+    options: [
+      { text: "۲۴۰٬۰۰۰ تومان", value: 240000 },
+      { text: "۲۶۰٬۰۰۰ تومان", value: 260000 },
+      { text: "۲۸۰٬۰۰۰ تومان", value: 280000 }
+    ],
+    answer: 240000,
+    hint: "۲۰ درصدِ ۳۰۰٬۰۰۰ برابر ۶۰٬۰۰۰ است. تخفیف را از قیمت کم کن."
+  },
+  {
+    title: "🍰 قفل دوم: دستور پخت",
+    question: "برای ۳ نفر، ۲ پیمانه آرد لازم است. برای ۹ نفر چند پیمانه لازم داریم؟",
+    options: [
+      { text: "۴ پیمانه", value: 4 },
+      { text: "۶ پیمانه", value: 6 },
+      { text: "۸ پیمانه", value: 8 }
+    ],
+    answer: 6,
+    hint: "تعداد مهمان‌ها ۳ برابر شده؛ مقدار آرد هم ۳ برابر می‌شود."
+  },
+  {
+    title: "🏦 قفل سوم: رمز درصد",
+    question: "۵ درصدِ ۴۰۰٬۰۰۰ تومان چند تومان است؟",
+    options: [
+      { text: "۱۰٬۰۰۰ تومان", value: 10000 },
+      { text: "۲۰٬۰۰۰ تومان", value: 20000 },
+      { text: "۴۰٬۰۰۰ تومان", value: 40000 }
+    ],
+    answer: 20000,
+    hint: "۱۰ درصد برابر ۴۰٬۰۰۰ است؛ ۵ درصد نصف آن است."
+  },
+  {
+    title: "📐 قفل چهارم: نقشه شهرک",
+    question: "اگر هر سانتی‌متر روی نقشه برابر ۳ متر باشد، ۸ سانتی‌متر چند متر است؟",
+    options: [
+      { text: "۱۸ متر", value: 18 },
+      { text: "۲۱ متر", value: 21 },
+      { text: "۲۴ متر", value: 24 }
+    ],
+    answer: 24,
+    hint: "۸ را در ۳ ضرب کن."
+  }
+];
+
+function showTower() {
+  loadProgress();
+
+  if (towerCompleted) {
+    app.innerHTML = `
+      <main dir="rtl">
+        <h1>🏆 برج هوشمند اندیشا</h1>
+        <h2>🎉 تو قهرمان شهرک شدی!</h2>
+        <p>⭐ امتیاز نهایی: ${score}</p>
+        <button data-action="city">بازگشت به شهرک 🏙️</button>
+      </main>`;
+    return;
+  }
+
+  towerStep = 0;
+  showTowerQuestion();
+}
+
+function showTowerQuestion() {
+  const q = towerQuestions[towerStep];
+
+  app.innerHTML = `
+    <main dir="rtl">
+      <h1>🏆 برج هوشمند اندیشا</h1>
+      <h2>مأموریت نهایی: چهار قفل قهرمانی</h2>
+      <h3>${q.title}</h3>
+      <p>🔐 قفل ${towerStep + 1} از ۴</p>
+      <p>${q.question}</p>
+      <div class="shop-options">
+        ${q.options.map(option => `
+          <button data-action="tower-answer" data-answer="${option.value}">
+            ${option.text}
+          </button>
+        `).join("")}
+      </div>
+      <p id="tower-feedback">🤖 اندی: هر چهار قفل را باز کن!</p>
+      <p>⭐ امتیاز فعلی: ${score}</p>
+      <button data-action="city">بازگشت به شهرک 🏙️</button>
+    </main>`;
+}
+
+function checkTowerAnswer(answer) {
+  loadProgress();
+  if (towerCompleted) return showTower();
+
+  const q = towerQuestions[towerStep];
+  const feedback = document.getElementById("tower-feedback");
+
+  if (answer === q.answer) {
+    towerStep++;
+
+    if (towerStep === 4) {
+      towerCompleted = true;
+      score += 10;
+      saveProgress();
+
+      app.innerHTML = `
+        <main dir="rtl">
+          <h1>🏆 برج هوشمند اندیشا</h1>
+          <h2>🎉🎉 چهار قفل باز شد!</h2>
+          <h2>🥇 تو قهرمان شهرک اندیشا هستی!</h2>
+          <p>⭐ امتیاز نهایی: ${score}</p>
+          <p>🛍️ فروشگاه: تکمیل</p>
+          <p>🍰 آشپزخانه: تکمیل</p>
+          <p>🏦 بانک: تکمیل</p>
+          <p>📐 نقشه‌سازی: تکمیل</p>
+          <p>🏆 برج هوشمند: تکمیل</p>
+          <h3>🌟 نشان طلایی قهرمانی مبارک!</h3>
+          <button data-action="city">بازگشت به شهرک 🏙️</button>
+        </main>`;
+    } else {
+      showTowerQuestion();
+    }
+  } else {
+    feedback.innerHTML = `
+      🌱 هنوز این قفل باز نشده!
+      <p>${q.hint}</p>
+      <p>دوباره تلاش کن قهرمان!</p>`;
   }
 }
 
 function showComingSoon(index) {
   const zone = zones[index];
+
   app.innerHTML = `
     <main dir="rtl">
       <h1>${zone.icon} ${zone.name}</h1>
@@ -359,11 +486,12 @@ app.addEventListener("click", function(event) {
     case "zone": {
       const index = Number(button.dataset.zone);
       if (!Number.isInteger(index) || !zones[index]) return;
+
       if (index === 0) showShop();
       else if (index === 1) showKitchen();
       else if (index === 2) showBank();
       else if (index === 3) showMapWorkshop();
-      else showComingSoon(index);
+      else if (index === 4) showTower();
       break;
     }
     case "shop-answer":
@@ -377,6 +505,9 @@ app.addEventListener("click", function(event) {
       break;
     case "map-answer":
       checkMapAnswer(Number(button.dataset.answer));
+      break;
+    case "tower-answer":
+      checkTowerAnswer(Number(button.dataset.answer));
       break;
   }
 });
