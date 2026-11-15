@@ -1,7 +1,9 @@
 
 const app = document.getElementById("app");
 
-let score = 0;
+// بازیابی امتیاز و پیشرفت قبلی
+let score = Number(localStorage.getItem("andishaScore")) || 0;
+let shopCompleted = localStorage.getItem("andishaShopCompleted") === "true";
 let attempts = 0;
 
 const zones = [
@@ -11,6 +13,11 @@ const zones = [
   { icon: "📐", name: "کارگاه نقشه‌سازی", mission: "مقیاس و تناسب", color: "#6499e8" },
   { icon: "🏆", name: "برج هوشمند", mission: "چالش نهایی ریاضی", color: "#a78ae8" }
 ];
+
+function saveProgress() {
+  localStorage.setItem("andishaScore", score);
+  localStorage.setItem("andishaShopCompleted", shopCompleted);
+}
 
 function showWelcome() {
   app.innerHTML = `
@@ -44,6 +51,8 @@ function showCity() {
       <h1>🏙️ شهرک هوشمند اندیشا</h1>
       <h2>نقشه مأموریت قهرمان</h2>
       <p>⭐ امتیاز تو: ${score}</p>
+      <p>🏅 وضعیت فروشگاه: ${shopCompleted ? "تکمیل شده" : "در انتظار قهرمان"}</p>
+
       <section class="city-map">
         ${zones.map((zone, i) => `
           <article class="building" style="border-top:7px solid ${zone.color}">
@@ -73,6 +82,21 @@ function showCity() {
 
 function showShop() {
   attempts = 0;
+
+  if (shopCompleted) {
+    app.innerHTML = `
+      <main dir="rtl">
+        <h1>🛍️ فروشگاه هوشمند اندیشا</h1>
+        <h2>🎉 مأموریت اول تکمیل شده است!</h2>
+        <p>قهرمان عزیز، تو قبلاً این مأموریت را با موفقیت انجام داده‌ای.</p>
+        <p>🏅 امتیاز این مأموریت قبلاً ثبت شده است.</p>
+        <p>⭐ مجموع امتیاز: ${score}</p>
+        <button id="mapBtn">بازگشت به شهرک 🏙️</button>
+      </main>
+    `;
+    document.getElementById("mapBtn").addEventListener("click", showCity);
+    return;
+  }
 
   app.innerHTML = `
     <main dir="rtl">
@@ -105,16 +129,25 @@ function showShop() {
 function checkShopAnswer(answer) {
   const feedback = document.getElementById("feedback");
 
+  if (shopCompleted) return;
+
   if (answer === 150000) {
+    shopCompleted = true;
     score += 10;
+    saveProgress();
+
     document.getElementById("score").textContent = `⭐ امتیاز: ${score}`;
+
     feedback.innerHTML = `
       🎉 آفرین قهرمان! پاسخ درست است.
       <p>۲۵ درصدِ ۲۰۰٬۰۰۰ می‌شود ۵۰٬۰۰۰ تومان.</p>
       <p>۲۰۰٬۰۰۰ − ۵۰٬۰۰۰ = ۱۵۰٬۰۰۰ تومان</p>
       <h3>🏅 ۱۰ امتیاز گرفتی!</h3>
+      <p>🌟 مأموریت فروشگاه با موفقیت تکمیل شد.</p>
     `;
+
     app.querySelectorAll(".answer-btn").forEach(button => button.disabled = true);
+
   } else {
     attempts++;
 
