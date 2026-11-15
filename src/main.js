@@ -10,10 +10,12 @@ let score = Number(localStorage.getItem("andishaScore")) || 0;
 let shopCompleted = localStorage.getItem("andishaShopCompleted") === "true";
 let kitchenCompleted = localStorage.getItem("andishaKitchenCompleted") === "true";
 let bankCompleted = localStorage.getItem("andishaBankCompleted") === "true";
+let mapCompleted = localStorage.getItem("andishaMapCompleted") === "true";
 
 let shopAttempts = 0;
 let kitchenAttempts = 0;
 let bankAttempts = 0;
+let mapAttempts = 0;
 
 const zones = [
   { icon: "🛍️", name: "فروشگاه هوشمند", mission: "تخفیف و قیمت نهایی", color: "#e7a23b" },
@@ -28,6 +30,7 @@ function saveProgress() {
   localStorage.setItem("andishaShopCompleted", String(shopCompleted));
   localStorage.setItem("andishaKitchenCompleted", String(kitchenCompleted));
   localStorage.setItem("andishaBankCompleted", String(bankCompleted));
+  localStorage.setItem("andishaMapCompleted", String(mapCompleted));
 }
 
 function loadProgress() {
@@ -35,6 +38,7 @@ function loadProgress() {
   shopCompleted = localStorage.getItem("andishaShopCompleted") === "true";
   kitchenCompleted = localStorage.getItem("andishaKitchenCompleted") === "true";
   bankCompleted = localStorage.getItem("andishaBankCompleted") === "true";
+  mapCompleted = localStorage.getItem("andishaMapCompleted") === "true";
 }
 
 function showWelcome() {
@@ -65,10 +69,11 @@ function showCity() {
     <main dir="rtl">
       <h1>🏙️ شهرک هوشمند اندیشا</h1>
       <h2>نقشه مأموریت قهرمان</h2>
-      <p>⭐ امتیاز تو: ${score}</p>
+      <h3>⭐ امتیاز تو: ${score}</h3>
       <p>🛍️ فروشگاه: ${shopCompleted ? "تکمیل شده 🎉" : "در انتظار قهرمان"}</p>
       <p>🍰 آشپزخانه: ${kitchenCompleted ? "تکمیل شده 🎉" : "در انتظار قهرمان"}</p>
       <p>🏦 بانک: ${bankCompleted ? "تکمیل شده 🎉" : "در انتظار قهرمان"}</p>
+      <p>📐 نقشه‌سازی: ${mapCompleted ? "تکمیل شده 🎉" : "در انتظار قهرمان"}</p>
       <section class="city-map">
         ${zones.map((zone, i) => `
           <article class="building" style="border-top:7px solid ${zone.color}">
@@ -189,8 +194,7 @@ function checkKitchenAnswer(answer) {
     feedback.innerHTML = `
       🎉 آفرین قهرمان!
       <p>تعداد مهمان‌ها دو برابر شده است.</p>
-      <p>پس آرد هم دو برابر می‌شود:</p>
-      <h3>۲ × ۲ = ۴ پیمانه آرد</h3>
+      <p>۲ × ۲ = ۴ پیمانه آرد</p>
       <h3>🏅 ۱۰ امتیاز گرفتی!</h3>`;
     app.querySelectorAll('[data-action="kitchen-answer"]').forEach(b => b.disabled = true);
   } else {
@@ -210,7 +214,6 @@ function showBank() {
       <main dir="rtl">
         <h1>🏦 بانک اندیشا</h1>
         <h2>🎉 مأموریت سوم تکمیل شده است!</h2>
-        <p>تو محاسبه درصد را با موفقیت انجام دادی.</p>
         <p>⭐ مجموع امتیاز: ${score}</p>
         <button data-action="city">بازگشت به شهرک 🏙️</button>
       </main>`;
@@ -221,9 +224,8 @@ function showBank() {
     <main dir="rtl">
       <h1>🏦 بانک اندیشا</h1>
       <h2>مأموریت سوم: راز درصد!</h2>
-      <p>👧 آوا: قهرمان! بانک برای یک حساب فرضی، پاداشی در نظر گرفته است.</p>
-      <p>💰 مبلغ سپرده: <strong>۵۰۰٬۰۰۰ تومان</strong></p>
-      <p>🎁 درصد پاداش: <strong>۱۰ درصد</strong></p>
+      <p>مبلغ سپرده فرضی: <strong>۵۰۰٬۰۰۰ تومان</strong></p>
+      <p>درصد پاداش: <strong>۱۰ درصد</strong></p>
       <h3>مقدار پاداش چند تومان می‌شود؟</h3>
       <div class="shop-options">
         <button data-action="bank-answer" data-answer="50000">۵۰٬۰۰۰ تومان</button>
@@ -252,14 +254,78 @@ function checkBankAnswer(answer) {
       🎉 آفرین قهرمان!
       <p>۱۰ درصد یعنی یک‌دهم.</p>
       <p>۵۰۰٬۰۰۰ ÷ ۱۰ = ۵۰٬۰۰۰ تومان</p>
-      <h3>🏅 ۱۰ امتیاز گرفتی!</h3>
-      <p>🏦 بانک اندیشا با موفقیت آباد شد!</p>`;
+      <h3>🏅 ۱۰ امتیاز گرفتی!</h3>`;
     app.querySelectorAll('[data-action="bank-answer"]').forEach(b => b.disabled = true);
   } else {
     bankAttempts++;
     feedback.innerHTML = bankAttempts === 1
-      ? `🌱 راهنمایی اندی: ۱۰ درصد یعنی یک‌دهم مبلغ. چطور یک‌دهم ۵۰۰٬۰۰۰ را پیدا می‌کنی؟`
-      : `🤖 اندی: برای پیدا کردن ۱۰ درصد، ۵۰۰٬۰۰۰ را بر ۱۰ تقسیم می‌کنیم؛ جواب ۵۰٬۰۰۰ است.`;
+      ? `🌱 راهنمایی اندی: ۱۰ درصد یعنی یک‌دهم مبلغ.`
+      : `🤖 اندی: ۵۰۰٬۰۰۰ را بر ۱۰ تقسیم می‌کنیم؛ جواب ۵۰٬۰۰۰ است.`;
+  }
+}
+
+function showMapWorkshop() {
+  mapAttempts = 0;
+  loadProgress();
+
+  if (mapCompleted) {
+    app.innerHTML = `
+      <main dir="rtl">
+        <h1>📐 کارگاه نقشه‌سازی</h1>
+        <h2>🎉 نقشه شهرک تکمیل شد!</h2>
+        <p>تو توانستی مقیاس نقشه را به فاصله واقعی تبدیل کنی.</p>
+        <p>⭐ مجموع امتیاز: ${score}</p>
+        <button data-action="city">بازگشت به شهرک 🏙️</button>
+      </main>`;
+    return;
+  }
+
+  app.innerHTML = `
+    <main dir="rtl">
+      <h1>📐 کارگاه نقشه‌سازی اندیشا</h1>
+      <h2>مأموریت چهارم: طراح شهرک باش!</h2>
+      <p>👧 آوا: قهرمان! باید فاصله مدرسه تا پارک را روی نقشه پیدا کنیم.</p>
+      <section class="map-mission">
+        <h3>🗺️ راهنمای نقشه</h3>
+        <p>هر ۱ سانتی‌متر روی نقشه برابر با ۲ متر در واقعیت است.</p>
+        <p>📏 فاصله مدرسه تا پارک روی نقشه: <strong>۷ سانتی‌متر</strong></p>
+        <h3>فاصله واقعی مدرسه تا پارک چند متر است؟</h3>
+      </section>
+      <div class="shop-options">
+        <button data-action="map-answer" data-answer="12">۱۲ متر</button>
+        <button data-action="map-answer" data-answer="14">۱۴ متر</button>
+        <button data-action="map-answer" data-answer="16">۱۶ متر</button>
+      </div>
+      <p id="map-feedback">پاسخ را انتخاب کن، مهندس کوچک!</p>
+      <p id="map-score">⭐ امتیاز: ${score}</p>
+      <button data-action="city">بازگشت به شهرک 🏙️</button>
+    </main>`;
+}
+
+function checkMapAnswer(answer) {
+  loadProgress();
+  if (mapCompleted) return showMapWorkshop();
+
+  const feedback = document.getElementById("map-feedback");
+  const scoreElement = document.getElementById("map-score");
+
+  if (answer === 14) {
+    mapCompleted = true;
+    score += 10;
+    saveProgress();
+    scoreElement.textContent = `⭐ امتیاز: ${score}`;
+    feedback.innerHTML = `
+      🎉 آفرین مهندس شهرک!
+      <p>۷ سانتی‌متر × ۲ متر = ۱۴ متر</p>
+      <p>تو مقیاس نقشه را درست به فاصله واقعی تبدیل کردی.</p>
+      <h3>🏅 ۱۰ امتیاز گرفتی!</h3>
+      <p>📐 کارگاه نقشه‌سازی تکمیل شد!</p>`;
+    app.querySelectorAll('[data-action="map-answer"]').forEach(b => b.disabled = true);
+  } else {
+    mapAttempts++;
+    feedback.innerHTML = mapAttempts === 1
+      ? `🌱 راهنمایی اندی: هر سانتی‌متر برابر ۲ متر است. پس ۷ را در ۲ ضرب کن.`
+      : `🤖 اندی: ۷ × ۲ = ۱۴ متر. پاسخ درست ۱۴ متر است.`;
   }
 }
 
@@ -296,6 +362,7 @@ app.addEventListener("click", function(event) {
       if (index === 0) showShop();
       else if (index === 1) showKitchen();
       else if (index === 2) showBank();
+      else if (index === 3) showMapWorkshop();
       else showComingSoon(index);
       break;
     }
@@ -307,6 +374,9 @@ app.addEventListener("click", function(event) {
       break;
     case "bank-answer":
       checkBankAnswer(Number(button.dataset.answer));
+      break;
+    case "map-answer":
+      checkMapAnswer(Number(button.dataset.answer));
       break;
   }
 });
