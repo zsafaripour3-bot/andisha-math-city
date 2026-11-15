@@ -1,9 +1,10 @@
 
 const app = document.getElementById("app");
 
-// بازیابی امتیاز و پیشرفت قبلی
+// بازیابی اطلاعات ذخیره‌شده
 let score = Number(localStorage.getItem("andishaScore")) || 0;
-let shopCompleted = localStorage.getItem("andishaShopCompleted") === "true";
+let shopCompleted =
+  localStorage.getItem("andishaShopCompleted") === "true";
 let attempts = 0;
 
 const zones = [
@@ -14,9 +15,15 @@ const zones = [
   { icon: "🏆", name: "برج هوشمند", mission: "چالش نهایی ریاضی", color: "#a78ae8" }
 ];
 
+function loadProgress() {
+  score = Number(localStorage.getItem("andishaScore")) || 0;
+  shopCompleted =
+    localStorage.getItem("andishaShopCompleted") === "true";
+}
+
 function saveProgress() {
-  localStorage.setItem("andishaScore", score);
-  localStorage.setItem("andishaShopCompleted", shopCompleted);
+  localStorage.setItem("andishaScore", String(score));
+  localStorage.setItem("andishaShopCompleted", String(shopCompleted));
 }
 
 function showWelcome() {
@@ -28,7 +35,9 @@ function showWelcome() {
       <button id="startBtn">شروع ماجراجویی 🚀</button>
     </main>
   `;
-  document.getElementById("startBtn").addEventListener("click", showStory);
+
+  document.getElementById("startBtn")
+    .addEventListener("click", showStory);
 }
 
 function showStory() {
@@ -42,20 +51,27 @@ function showStory() {
       <button id="enterBtn">ورود به شهرک 🏙️</button>
     </main>
   `;
-  document.getElementById("enterBtn").addEventListener("click", showCity);
+
+  document.getElementById("enterBtn")
+    .addEventListener("click", showCity);
 }
 
 function showCity() {
+  loadProgress();
+
   app.innerHTML = `
     <main dir="rtl">
       <h1>🏙️ شهرک هوشمند اندیشا</h1>
       <h2>نقشه مأموریت قهرمان</h2>
       <p>⭐ امتیاز تو: ${score}</p>
-      <p>🏅 وضعیت فروشگاه: ${shopCompleted ? "تکمیل شده" : "در انتظار قهرمان"}</p>
+      <p>🏅 وضعیت فروشگاه:
+        ${shopCompleted ? "تکمیل شده 🎉" : "در انتظار قهرمان"}
+      </p>
 
       <section class="city-map">
         ${zones.map((zone, i) => `
-          <article class="building" style="border-top:7px solid ${zone.color}">
+          <article class="building"
+            style="border-top:7px solid ${zone.color}">
             <div class="building-icon">${zone.icon}</div>
             <h2>${zone.name}</h2>
             <p>${zone.mission}</p>
@@ -71,6 +87,7 @@ function showCity() {
   app.querySelectorAll(".zone-btn").forEach(button => {
     button.addEventListener("click", () => {
       const index = Number(button.dataset.zone);
+
       if (index === 0) {
         showShop();
       } else {
@@ -82,19 +99,22 @@ function showCity() {
 
 function showShop() {
   attempts = 0;
+  loadProgress();
 
   if (shopCompleted) {
     app.innerHTML = `
       <main dir="rtl">
         <h1>🛍️ فروشگاه هوشمند اندیشا</h1>
         <h2>🎉 مأموریت اول تکمیل شده است!</h2>
-        <p>قهرمان عزیز، تو قبلاً این مأموریت را با موفقیت انجام داده‌ای.</p>
+        <p>آفرین قهرمان! تو فروشگاه را با موفقیت آباد کردی.</p>
         <p>🏅 امتیاز این مأموریت قبلاً ثبت شده است.</p>
         <p>⭐ مجموع امتیاز: ${score}</p>
         <button id="mapBtn">بازگشت به شهرک 🏙️</button>
       </main>
     `;
-    document.getElementById("mapBtn").addEventListener("click", showCity);
+
+    document.getElementById("mapBtn")
+      .addEventListener("click", showCity);
     return;
   }
 
@@ -108,9 +128,15 @@ function showShop() {
       <h3>قیمت نهایی کیف چقدر است؟</h3>
 
       <div class="shop-options">
-        <button class="answer-btn" data-answer="150000">۱۵۰٬۰۰۰ تومان</button>
-        <button class="answer-btn" data-answer="175000">۱۷۵٬۰۰۰ تومان</button>
-        <button class="answer-btn" data-answer="125000">۱۲۵٬۰۰۰ تومان</button>
+        <button class="answer-btn" data-answer="150000">
+          ۱۵۰٬۰۰۰ تومان
+        </button>
+        <button class="answer-btn" data-answer="175000">
+          ۱۷۵٬۰۰۰ تومان
+        </button>
+        <button class="answer-btn" data-answer="125000">
+          ۱۲۵٬۰۰۰ تومان
+        </button>
       </div>
 
       <p id="feedback">یکی از پاسخ‌ها را انتخاب کن.</p>
@@ -120,23 +146,32 @@ function showShop() {
   `;
 
   app.querySelectorAll(".answer-btn").forEach(button => {
-    button.addEventListener("click", () => checkShopAnswer(Number(button.dataset.answer)));
+    button.addEventListener("click", () => {
+      checkShopAnswer(Number(button.dataset.answer));
+    });
   });
 
-  document.getElementById("mapBtn").addEventListener("click", showCity);
+  document.getElementById("mapBtn")
+    .addEventListener("click", showCity);
 }
 
 function checkShopAnswer(answer) {
-  const feedback = document.getElementById("feedback");
+  loadProgress();
 
-  if (shopCompleted) return;
+  if (shopCompleted) {
+    showShop();
+    return;
+  }
+
+  const feedback = document.getElementById("feedback");
 
   if (answer === 150000) {
     shopCompleted = true;
     score += 10;
     saveProgress();
 
-    document.getElementById("score").textContent = `⭐ امتیاز: ${score}`;
+    document.getElementById("score").textContent =
+      `⭐ امتیاز: ${score}`;
 
     feedback.innerHTML = `
       🎉 آفرین قهرمان! پاسخ درست است.
@@ -146,7 +181,9 @@ function checkShopAnswer(answer) {
       <p>🌟 مأموریت فروشگاه با موفقیت تکمیل شد.</p>
     `;
 
-    app.querySelectorAll(".answer-btn").forEach(button => button.disabled = true);
+    app.querySelectorAll(".answer-btn").forEach(button => {
+      button.disabled = true;
+    });
 
   } else {
     attempts++;
@@ -180,7 +217,8 @@ function showComingSoon(index) {
     </main>
   `;
 
-  document.getElementById("backBtn").addEventListener("click", showCity);
+  document.getElementById("backBtn")
+    .addEventListener("click", showCity);
 }
 
 showWelcome();
