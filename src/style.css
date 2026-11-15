@@ -1,0 +1,105 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Vazirmatn', Tahoma, sans-serif;
+  direction: rtl;
+  color: #fff;
+  background: linear-gradient(145deg, #101d45, #263c78 55%, #604b91);
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+  padding: 24px 16px;
+}
+
+main {
+  max-width: 850px;
+  margin: 35px auto;
+  padding: 30px 22px;
+  text-align: center;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 28px;
+  box-shadow: 0 18px 45px rgba(0,0,0,.2);
+  backdrop-filter: blur(12px);
+}
+
+h1 {
+  font-size: clamp(27px, 6vw, 42px);
+  color: #ffe18a;
+  margin-bottom: 12px;
+}
+
+h2 {
+  color: #d9e5ff;
+  font-size: clamp(19px, 4vw, 27px);
+}
+
+h3 {
+  color: #ffe18a;
+}
+
+p {
+  font-size: 17px;
+  line-height: 2.1;
+}
+
+button {
+  border: 0;
+  border-radius: 16px;
+  padding: 14px 25px;
+  margin-top: 18px;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  color: #19264d;
+  background: linear-gradient(135deg, #ffe89b, #ffc857);
+  box-shadow: 0 7px 18px rgba(0,0,0,.2);
+  cursor: pointer;
+  transition: transform .2s;
+}
+
+button:active {
+  transform: scale(.96);
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 15px;
+  margin-top: 25px;
+}
+
+li {
+  padding: 25px 12px;
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(255,255,255,.22), rgba(255,255,255,.08));
+  border: 1px solid rgba(255,255,255,.2);
+  font-size: 18px;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
+}
+
+@media (max-width: 480px) {
+  #app {
+    padding: 12px;
+  }
+
+  main {
+    margin: 18px auto;
+    padding: 24px 15px;
+  }
+
+  p {
+    font-size: 15px;
+  }
+}
