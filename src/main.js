@@ -1,7 +1,12 @@
 
 const app = document.getElementById("app");
 
-// بازیابی اطلاعات
+if (!app) {
+  document.body.innerHTML = "<h2>خطا: بخش اصلی بازی پیدا نشد.</h2>";
+  throw new Error("Andisha app element not found");
+}
+
+// اطلاعات بازی
 let score = Number(localStorage.getItem("andishaScore")) || 0;
 let shopCompleted =
   localStorage.getItem("andishaShopCompleted") === "true";
@@ -26,27 +31,19 @@ function saveProgress() {
   localStorage.setItem("andishaShopCompleted", String(shopCompleted));
 }
 
-// اتصال یکپارچه دکمه‌ها
-function setAction(id, action) {
-  const button = document.getElementById(id);
-  if (button) {
-    button.onclick = action;
-  }
-}
-
+// صفحه خوشامدگویی
 function showWelcome() {
   app.innerHTML = `
     <main dir="rtl">
       <h1>🏙️ شهرک هوشمند اندیشا</h1>
       <h2>مأموریت بزرگ تناسب و درصد</h2>
       <p>سلام قهرمان! آماده‌ای شهرک را بسازی؟</p>
-      <button id="startBtn">شروع ماجراجویی 🚀</button>
+      <button data-action="story">شروع ماجراجویی 🚀</button>
     </main>
   `;
-
-  setAction("startBtn", showStory);
 }
 
+// داستان بازی
 function showStory() {
   app.innerHTML = `
     <main dir="rtl">
@@ -55,13 +52,12 @@ function showStory() {
       <p>آوا: سلام قهرمان! من مهندس کوچک شهرک هستم.</p>
       <p>اندی: شهرک به کمک ریاضی تو نیاز دارد!</p>
       <p>با حل معماها، پنج منطقه را آباد می‌کنیم.</p>
-      <button id="enterBtn">ورود به شهرک 🏙️</button>
+      <button data-action="city">ورود به شهرک 🏙️</button>
     </main>
   `;
-
-  setAction("enterBtn", showCity);
 }
 
+// نقشه شهرک
 function showCity() {
   loadProgress();
 
@@ -81,7 +77,7 @@ function showCity() {
             <div class="building-icon">${zone.icon}</div>
             <h2>${zone.name}</h2>
             <p>${zone.mission}</p>
-            <button class="zone-btn" data-zone="${i}">
+            <button data-action="zone" data-zone="${i}">
               ورود به منطقه 🚀
             </button>
           </article>
@@ -89,20 +85,9 @@ function showCity() {
       </section>
     </main>
   `;
-
-  app.querySelectorAll(".zone-btn").forEach(button => {
-    button.onclick = function () {
-      const index = Number(this.dataset.zone);
-
-      if (index === 0) {
-        showShop();
-      } else {
-        showComingSoon(index);
-      }
-    };
-  });
 }
 
+// فروشگاه
 function showShop() {
   attempts = 0;
   loadProgress();
@@ -115,11 +100,9 @@ function showShop() {
         <p>آفرین قهرمان! تو فروشگاه را با موفقیت آباد کردی.</p>
         <p>🏅 امتیاز این مأموریت قبلاً ثبت شده است.</p>
         <p>⭐ مجموع امتیاز: ${score}</p>
-        <button id="mapBtn">بازگشت به شهرک 🏙️</button>
+        <button data-action="city">بازگشت به شهرک 🏙️</button>
       </main>
     `;
-
-    setAction("mapBtn", showCity);
     return;
   }
 
@@ -133,26 +116,19 @@ function showShop() {
       <h3>قیمت نهایی کیف چقدر است؟</h3>
 
       <div class="shop-options">
-        <button class="answer-btn" data-answer="150000">۱۵۰٬۰۰۰ تومان</button>
-        <button class="answer-btn" data-answer="175000">۱۷۵٬۰۰۰ تومان</button>
-        <button class="answer-btn" data-answer="125000">۱۲۵٬۰۰۰ تومان</button>
+        <button data-action="answer" data-answer="150000">۱۵۰٬۰۰۰ تومان</button>
+        <button data-action="answer" data-answer="175000">۱۷۵٬۰۰۰ تومان</button>
+        <button data-action="answer" data-answer="125000">۱۲۵٬۰۰۰ تومان</button>
       </div>
 
       <p id="feedback">یکی از پاسخ‌ها را انتخاب کن.</p>
       <p id="score">⭐ امتیاز: ${score}</p>
-      <button id="mapBtn">بازگشت به شهرک 🏙️</button>
+      <button data-action="city">بازگشت به شهرک 🏙️</button>
     </main>
   `;
-
-  app.querySelectorAll(".answer-btn").forEach(button => {
-    button.onclick = function () {
-      checkShopAnswer(Number(this.dataset.answer));
-    };
-  });
-
-  setAction("mapBtn", showCity);
 }
 
+// بررسی پاسخ
 function checkShopAnswer(answer) {
   loadProgress();
 
@@ -162,14 +138,14 @@ function checkShopAnswer(answer) {
   }
 
   const feedback = document.getElementById("feedback");
+  const scoreElement = document.getElementById("score");
 
   if (answer === 150000) {
     shopCompleted = true;
     score += 10;
     saveProgress();
 
-    document.getElementById("score").textContent =
-      `⭐ امتیاز: ${score}`;
+    scoreElement.textContent = `⭐ امتیاز: ${score}`;
 
     feedback.innerHTML = `
       🎉 آفرین قهرمان! پاسخ درست است.
@@ -179,7 +155,7 @@ function checkShopAnswer(answer) {
       <p>🌟 مأموریت فروشگاه با موفقیت تکمیل شد.</p>
     `;
 
-    app.querySelectorAll(".answer-btn").forEach(button => {
+    app.querySelectorAll('[data-action="answer"]').forEach(button => {
       button.disabled = true;
     });
 
@@ -203,6 +179,7 @@ function checkShopAnswer(answer) {
   }
 }
 
+// مناطق دیگر
 function showComingSoon(index) {
   const zone = zones[index];
 
@@ -211,11 +188,53 @@ function showComingSoon(index) {
       <h1>${zone.icon} ${zone.name}</h1>
       <h2>🤖 اندی: به‌زودی این مأموریت فعال می‌شود!</h2>
       <p>${zone.mission}</p>
-      <button id="backBtn">بازگشت به نقشه 🏙️</button>
+      <button data-action="city">بازگشت به نقشه 🏙️</button>
     </main>
   `;
-
-  setAction("backBtn", showCity);
 }
 
+// تنها مسیر مدیریت تمام کلیک‌ها
+app.addEventListener("click", function(event) {
+  const button = event.target.closest("button");
+
+  if (!button || !app.contains(button) || button.disabled) {
+    return;
+  }
+
+  const action = button.dataset.action;
+
+  if (!action) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  switch (action) {
+    case "story":
+      showStory();
+      break;
+
+    case "city":
+      showCity();
+      break;
+
+    case "zone": {
+      const index = Number(button.dataset.zone);
+
+      if (!Number.isInteger(index) || !zones[index]) return;
+
+      if (index === 0) {
+        showShop();
+      } else {
+        showComingSoon(index);
+      }
+      break;
+    }
+
+    case "answer":
+      checkShopAnswer(Number(button.dataset.answer));
+      break;
+  }
+});
+
+// شروع بازی
 showWelcome();
