@@ -733,3 +733,140 @@ showWelcome();
 
   makePanel();
 })();
+
+/* 🎵 ANDISHA MUSIC STUDIO */
+(function () {
+  if (document.getElementById("andishaMusicStudio")) return;
+
+  const tracks = {
+    calm: [392, 440, 494, 440, 392, 330, 392, 440],
+    happy: [523, 659, 784, 659, 587, 698, 784, 880],
+    adventure: [330, 392, 494, 587, 494, 392, 330, 294]
+  };
+
+  let audio = null;
+  let timer = null;
+  let noteIndex = 0;
+  let enabled = localStorage.getItem("andishaMusicEnabled") === "true";
+  let track = localStorage.getItem("andishaMusicTrack") || "happy";
+  let volume = Number(localStorage.getItem("andishaMusicVolume") || 0.12);
+
+  const panel = document.createElement("section");
+  panel.id = "andishaMusicStudio";
+  panel.dir = "rtl";
+  panel.style.cssText = `
+    position:relative; margin:20px auto; padding:16px;
+    max-width:420px; border-radius:20px;
+    background:linear-gradient(135deg,#142b52,#315b91);
+    color:white; font-family:inherit; text-align:center;
+    box-shadow:0 5px 18px #142b5240;
+  `;
+
+  panel.innerHTML = `
+    <h3 style="margin:0 0 12px">🎵 استودیوی موسیقی اندیشا</h3>
+    <select id="andishaTrack" style="padding:10px;border-radius:10px;width:100%;margin-bottom:12px">
+      <option value="calm">🌙 موسیقی آرام</option>
+      <option value="happy">🎈 موسیقی شاد کودکانه</option>
+      <option value="adventure">🚀 موسیقی ماجراجویانه</option>
+    </select>
+    <button id="andishaMusicToggle" style="
+      padding:11px 22px;border:0;border-radius:12px;
+      background:#f5c75e;color:#142b52;font-weight:bold">
+      ${enabled ? "🔇 خاموش کردن موسیقی" : "🎶 روشن کردن موسیقی"}
+    </button>
+    <p style="margin:12px 0 5px">🔊 میزان صدا</p>
+    <input id="andishaVolume" type="range" min="0" max="0.3"
+      step="0.01" value="${volume}" style="width:90%">
+    <small id="andishaMusicStatus">موسیقی پس‌زمینه بازی</small>
+  `;
+
+  document.body.appendChild(panel);
+
+  const selector = document.getElementById("andishaTrack");
+  const toggle = document.getElementById("andishaMusicToggle");
+  const slider = document.getElementById("andishaVolume");
+  const status = document.getElementById("andishaMusicStatus");
+
+  selector.value = tracks[track] ? track : "happy";
+
+  function setupAudio() {
+    const AudioAPI = window.AudioContext || window.webkitAudioContext;
+    if (!AudioAPI) {
+      status.textContent = "مرورگر از پخش موسیقی پشتیبانی نمی‌کند.";
+      return false;
+    }
+    if (!audio) audio = new AudioAPI();
+    if (audio.state === "suspended") audio.resume();
+    return true;
+  }
+
+  function playNote() {
+    if (!audio || !enabled) return;
+
+    const melody = tracks[track];
+    const frequency = melody[noteIndex % melody.length];
+    noteIndex++;
+
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.001, audio.currentTime);
+    gain.gain.linearRampToValueAtTime(volume, audio.currentTime + 0.04);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001, audio.currentTime + 0.24
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audio.destination);
+    oscillator.start();
+    oscillator.stop(audio.currentTime + 0.26);
+  }
+
+  function startMusic() {
+    if (!enabled || timer) return;
+    if (!setupAudio()) return;
+
+    noteIndex = 0;
+    playNote();
+    timer = setInterval(playNote, 280);
+    status.textContent = "🎵 موسیقی در حال پخش است";
+  }
+
+  function stopMusic() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    status.textContent = "موسیقی متوقف شد";
+  }
+
+  toggle.addEventListener("click", function () {
+    enabled = !enabled;
+    localStorage.setItem("andishaMusicEnabled", enabled);
+    toggle.textContent = enabled
+      ? "🔇 خاموش کردن موسیقی"
+      : "🎶 روشن کردن موسیقی";
+
+    if (enabled) startMusic();
+    else stopMusic();
+  });
+
+  selector.addEventListener("change", function () {
+    track = selector.value;
+    localStorage.setItem("andishaMusicTrack", track);
+    if (enabled) {
+      stopMusic();
+      startMusic();
+    }
+  });
+
+  slider.addEventListener("input", function () {
+    volume = Number(slider.value);
+    localStorage.setItem("andishaMusicVolume", volume);
+  });
+
+  if (enabled) {
+    toggle.textContent = "🔇 خاموش کردن موسیقی";
+    status.textContent = "برای شروع، دکمه روشن کردن را بزنید";
+  }
+})();
