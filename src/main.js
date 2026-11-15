@@ -915,3 +915,75 @@ showWelcome();
     message.textContent = "🎵 آهنگ انتخاب شد؛ دکمه پخش را بزن!";
   });
 })();
+
+/* 🎙️ ANDISHA VOICE GUIDE */
+(function () {
+  if (document.getElementById("andishaVoiceGuide")) return;
+
+  const host = document.getElementById("andishaMusicStudio") || document.body;
+  const guide = document.createElement("div");
+
+  guide.id = "andishaVoiceGuide";
+  guide.dir = "rtl";
+  guide.style.cssText =
+    "margin:14px auto;padding:14px;border:2px solid #f5c75e;border-radius:15px;text-align:center;color:white;background:#142b52";
+
+  guide.innerHTML = `
+    <h3>🎙️ راهنمای صوتی قهرمان</h3>
+    <button id="andishaRead" style="padding:12px;border:0;border-radius:10px;background:#f5c75e;color:#142b52;font-weight:bold">
+      🔊 خواندن راهنمای این صفحه
+    </button>
+    <button id="andishaStop" style="padding:12px;border:0;border-radius:10px;margin:5px">
+      ⏹ توقف صدا
+    </button>
+    <p id="andishaVoiceStatus">راهنمای صوتی آماده است.</p>
+  `;
+
+  host.appendChild(guide);
+
+  const status = document.getElementById("andishaVoiceStatus");
+
+  document.getElementById("andishaRead").addEventListener("click", function () {
+    if (!("speechSynthesis" in window)) {
+      status.textContent = "مرورگر از راهنمای صوتی پشتیبانی نمی‌کند.";
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const main = document.querySelector("#app main");
+    if (!main) return;
+
+    const parts = main.querySelectorAll(
+      "h1,h2,h3,p,.shop-options button"
+    );
+
+    const message = Array.from(parts)
+      .map(el => el.innerText.trim())
+      .filter(Boolean)
+      .join(". ");
+
+    if (!message) return;
+
+    const speech = new SpeechSynthesisUtterance(message);
+    speech.lang = "fa-IR";
+    speech.rate = 0.88;
+    speech.pitch = 1;
+
+    speech.onstart = () => status.textContent = "🔊 در حال خواندن...";
+    speech.onend = () => status.textContent = "خواندن تمام شد 🌟";
+    speech.onerror = () => status.textContent =
+      "صدای فارسی گوشی را بررسی کن.";
+
+    window.speechSynthesis.speak(speech);
+  });
+
+  document.getElementById("andishaStop").addEventListener("click", function () {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    status.textContent = "صدا متوقف شد.";
+  });
+
+  document.getElementById("app").addEventListener("click", function () {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  });
+})();
