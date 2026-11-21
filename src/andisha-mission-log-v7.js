@@ -1,212 +1,185 @@
 (function () {
   "use strict";
 
-  const DATA_KEY = "andishaExpansionV3";
-  const MISSION_KEY = {
-    shop: "andishaShopCompleted",
-    kitchen: "andishaKitchenCompleted",
-    bank: "andishaBankCompleted",
-    map: "andishaMapCompleted",
-    tower: "andishaTowerCompleted"
-  };
+  if (window.__andishaMissionLogV7) return;
+  window.__andishaMissionLogV7 = true;
 
   const missions = [
-    { id: "shop", title: "فروشگاه", icon: "🛍️", key: MISSION_KEY.shop },
-    { id: "kitchen", title: "آشپزخانه", icon: "🍰", key: MISSION_KEY.kitchen },
-    { id: "bank", title: "بانک", icon: "🏦", key: MISSION_KEY.bank },
-    { id: "map", title: "کارگاه نقشه", icon: "📐", key: MISSION_KEY.map },
-    { id: "tower", title: "برج", icon: "🏰", key: MISSION_KEY.tower }
+    { key: "andishaShopCompleted", name: "🛍️ مأموریت فروشگاه" },
+    { key: "andishaKitchenCompleted", name: "🍰 مأموریت آشپزخانه" },
+    { key: "andishaBankCompleted", name: "🏦 مأموریت بانک" },
+    { key: "andishaMapCompleted", name: "📐 مأموریت نقشه" },
+    { key: "andishaTowerCompleted", name: "🏰 مأموریت برج" }
   ];
 
-  function readData() {
-    try {
-      return JSON.parse(localStorage.getItem(DATA_KEY) || "{}");
-    } catch (e) {
-      return {};
-    }
-  }
-
   function isDone(key) {
-    return localStorage.getItem(key) === "true";
-  }
-
-  function getProgress() {
-    return missions.filter(function (m) {
-      return isDone(m.key);
-    }).length;
+    const value = localStorage.getItem(key);
+    return value === "true" || value === "1";
   }
 
   function render() {
-    const data = readData();
-    const completed = getProgress();
-    const percent = Math.round(completed / missions.length * 100);
+    const completed = missions.filter(function (mission) {
+      return isDone(mission.key);
+    }).length;
 
-    const html = `
-      <div class="v7-mission-log">
-        <div class="v7-header">
-          <div class="v7-header-icon">📜</div>
-          <h2>دفترچهٔ مأموریت‌های قهرمان</h2>
-          <p>قدم‌به‌قدم تا افتخار بزرگ اندیشا</p>
-        </div>
+    let html = `
+      <section class="v7-mission-log">
+        <h2>📜 دفترچه مأموریت قهرمان اندیشا</h2>
+        <p>گزارش پیشرفت ماجراجویی تو</p>
 
         <div class="v7-progress">
-          <strong>پیشرفت مأموریت‌ها</strong>
-          <div class="v7-progress-number">${completed} از ۵</div>
+          <strong>${completed} از ۵ مأموریت انجام‌شده</strong>
           <div class="v7-progress-track">
-            <div class="v7-progress-fill" style="width:${percent}%"></div>
+            <div class="v7-progress-fill"
+              style="width:${completed * 20}%"></div>
           </div>
-          <p>${percent}٪ از مسیر قهرمانی طی شده است.</p>
         </div>
 
         <div class="v7-mission-list">
-          ${missions.map(function (m, index) {
-            const done = isDone(m.key);
-            return `
-              <div class="v7-mission ${done ? "completed" : "pending"}">
-                <span class="v7-mission-icon">${m.icon}</span>
-                <div class="v7-mission-info">
-                  <strong>مأموریت ${index + 1}: ${m.title}</strong>
-                  <small>${done ? "✅ انجام‌شده" : "🔒 در انتظار انجام"}</small>
-                </div>
-                <span>${done ? "🏅" : "⭐"}</span>
-              </div>
-            `;
-          }).join("")}
+    `;
+
+    missions.forEach(function (mission) {
+      const done = isDone(mission.key);
+
+      html += `
+        <div class="v7-mission-item">
+          <span>${mission.name}</span>
+          <strong class="${done ? "v7-done" : "v7-pending"}">
+            ${done ? "🏅 انجام شد" : "🔒 باقی‌مانده"}
+          </strong>
         </div>
-      </div>
+      `;
+    });
+
+    html += `
+        </div>
+        <p class="v7-message">
+          ${completed === 5
+            ? "🎉 آفرین! همهٔ مأموریت‌ها را با موفقیت انجام دادی."
+            : "✨ برای تکمیل دفترچه، مأموریت‌های باقی‌مانده را انجام بده."}
+        </p>
+      </section>
     `;
 
     return html;
   }
+
+  function addStyles() {
+    if (document.getElementById("andisha-v7-style")) return;
+
     const style = document.createElement("style");
-  style.textContent = `
-    .v7-mission-log {
-      direction: rtl;
-      padding: 18px;
-      border-radius: 20px;
-      background: linear-gradient(145deg, #142b52, #244b7d);
-      color: #fff;
-      font-family: inherit;
-    }
+    style.id = "andisha-v7-style";
 
-    .v7-header {
-      text-align: center;
-      padding: 15px 5px;
-    }
-
-    .v7-header-icon {
-      font-size: 42px;
-    }
-
-    .v7-header h2 {
-      margin: 10px 0;
-      font-size: 21px;
-    }
-
-    .v7-header p,
-    .v7-progress p {
-      color: #dce9ff;
-      font-size: 13px;
-    }
-
-    .v7-progress {
-      background: rgba(255,255,255,.12);
-      padding: 16px;
-      border-radius: 16px;
-      margin-bottom: 18px;
-    }
-
-    .v7-progress-number {
-      margin: 10px 0;
-      color: #ffd76a;
-      font-size: 22px;
-      font-weight: bold;
-    }
-
-    .v7-progress-track {
-      height: 12px;
-      background: rgba(255,255,255,.2);
-      border-radius: 20px;
-      overflow: hidden;
-    }
-
-    .v7-progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #ffd76a, #fff0a8);
-      border-radius: 20px;
-      transition: width .4s ease;
-    }
-
-    .v7-mission-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .v7-mission {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 13px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.12);
-    }
-
-    .v7-mission.completed {
-      border-color: #ffd76a;
-    }
-
-    .v7-mission-icon {
-      font-size: 28px;
-    }
-
-    .v7-mission-info {
-      display: grid;
-      gap: 5px;
-      flex: 1;
-    }
-
-    .v7-mission-info small {
-      color: #dce9ff;
-    }
-  `;
-  document.head.appendChild(style);
-    function addTab() {
-    const tabs = document.querySelector(".andisha-v3-tabs");
-    if (!tabs || document.querySelector('[data-v7-tab]')) return;
-
-    const tab = document.createElement("button");
-    tab.type = "button";
-    tab.textContent = "📜 دفترچه مأموریت";
-    tab.setAttribute("data-v7-tab", "true");
-
-    tab.addEventListener("click", function () {
-      let panel = document.querySelector('[data-v7-panel]');
-
-      if (!panel) {
-        panel = document.createElement("div");
-        panel.setAttribute("data-v7-panel", "true");
-        tabs.parentNode.appendChild(panel);
+    style.textContent = `
+      .v7-mission-log {
+        direction: rtl;
+        text-align: right;
+        padding: 16px;
+        color: inherit;
       }
 
-      panel.innerHTML = render();
-      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      .v7-mission-log h2 {
+        text-align: center;
+        color: #e5b94f;
+      }
+
+      .v7-progress {
+        margin: 20px 0;
+        padding: 15px;
+        border-radius: 14px;
+        background: rgba(255,255,255,.08);
+      }
+
+      .v7-progress-track {
+        height: 13px;
+        margin-top: 12px;
+        overflow: hidden;
+        border-radius: 20px;
+        background: rgba(255,255,255,.15);
+      }
+
+      .v7-progress-fill {
+        height: 100%;
+        border-radius: 20px;
+        background: #e5b94f;
+        transition: width .3s ease;
+      }
+
+      .v7-mission-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin: 10px 0;
+        padding: 13px;
+        border-radius: 12px;
+        background: rgba(255,255,255,.08);
+      }
+
+      .v7-done {
+        color: #55d69e;
+      }
+
+      .v7-pending {
+        color: #f0bd59;
+      }
+
+      .v7-message {
+        text-align: center;
+        margin-top: 20px;
+        line-height: 2;
+      }
+
+      @media(max-width:380px) {
+        .v7-mission-item {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function addTab() {
+    const tabs = document.querySelector(".andisha-v3-tabs");
+
+    if (!tabs) return;
+    if (document.getElementById("andisha-v7-tab")) return;
+
+    const tab = document.createElement("button");
+    tab.id = "andisha-v7-tab";
+    tab.type = "button";
+    tab.textContent = "📜 دفترچه مأموریت";
+
+    tab.addEventListener("click", function () {
+      const content = document.getElementById("andisha-v3-content");
+
+      if (!content) return;
+
+      content.innerHTML = render();
     });
 
     tabs.appendChild(tab);
   }
 
-  const observer = new MutationObserver(addTab);
+  function init() {
+    addStyles();
+    addTab();
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+    const observer = new MutationObserver(function () {
+      addTab();
+    });
 
-  addTab();
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
 
-  window.addEventListener("storage", function () {
-    const panel = document.querySelector('[data-v7-panel]');
-    if (panel) panel.innerHTML = render();
-  });
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 })();
