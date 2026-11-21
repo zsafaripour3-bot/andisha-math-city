@@ -1,3 +1,4 @@
+
 (function () {
   "use strict";
 
@@ -22,16 +23,22 @@
       return isDone(mission.key);
     }).length;
 
+    const percent = Math.round((completed / missions.length) * 100);
+
     let html = `
       <section class="v7-mission-log">
         <h2>📜 دفترچه مأموریت قهرمان اندیشا</h2>
         <p>گزارش پیشرفت ماجراجویی تو</p>
 
         <div class="v7-progress">
-          <strong>${completed} از ۵ مأموریت انجام‌شده</strong>
+          <div class="v7-progress-heading">
+            <strong>${completed} از ۵ مأموریت انجام‌شده</strong>
+            <strong>${percent}٪</strong>
+          </div>
+
           <div class="v7-progress-track">
             <div class="v7-progress-fill"
-              style="width:${completed * 20}%"></div>
+              style="width:${percent}%"></div>
           </div>
         </div>
 
@@ -90,19 +97,31 @@
         background: rgba(255,255,255,.08);
       }
 
+      .v7-progress-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
       .v7-progress-track {
-        height: 13px;
+        display: block !important;
+        width: 100% !important;
+        height: 14px !important;
         margin-top: 12px;
         overflow: hidden;
         border-radius: 20px;
-        background: rgba(255,255,255,.15);
+        background: rgba(255,255,255,.18) !important;
       }
 
       .v7-progress-fill {
-        height: 100%;
+        display: block !important;
+        height: 100% !important;
+        max-width: 100%;
+        min-width: 0;
         border-radius: 20px;
-        background: #e5b94f;
-        transition: width .3s ease;
+        background: linear-gradient(90deg, #f4d477, #e5a928) !important;
+        transition: width .7s ease;
       }
 
       .v7-mission-item {
@@ -154,7 +173,6 @@
 
     tab.addEventListener("click", function () {
       const content = document.getElementById("andisha-v3-content");
-
       if (!content) return;
 
       content.innerHTML = render();
