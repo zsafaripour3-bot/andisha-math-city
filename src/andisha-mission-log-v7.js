@@ -14,8 +14,12 @@
   ];
 
   function isDone(key) {
-    const value = localStorage.getItem(key);
-    return value === "true" || value === "1";
+    try {
+      const value = localStorage.getItem(key);
+      return value === "true" || value === "1";
+    } catch (error) {
+      return false;
+    }
   }
 
   function render() {
@@ -23,7 +27,9 @@
       return isDone(mission.key);
     }).length;
 
-    const percent = Math.round((completed / missions.length) * 100);
+    const percent = Math.round(
+      (completed / missions.length) * 100
+    );
 
     let html = `
       <section class="v7-mission-log">
@@ -33,12 +39,14 @@
         <div class="v7-progress">
           <div class="v7-progress-heading">
             <strong>${completed} از ۵ مأموریت انجام‌شده</strong>
-            <strong>${percent}٪</strong>
+            <strong class="v7-percent">۰٪</strong>
           </div>
 
           <div class="v7-progress-track">
             <div class="v7-progress-fill"
-              style="width:${percent}%"></div>
+                 data-target="${percent}"
+                 style="width:0%">
+            </div>
           </div>
         </div>
 
@@ -71,6 +79,22 @@
     return html;
   }
 
+  function animateProgress(content) {
+    const bar = content.querySelector(".v7-progress-fill");
+    const counter = content.querySelector(".v7-percent");
+
+    if (!bar || !counter) return;
+
+    const target = Number(bar.dataset.target) || 0;
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        bar.style.width = target + "%";
+        counter.textContent = target.toLocaleString("fa-IR") + "٪";
+      });
+    });
+  }
+
   function addStyles() {
     if (document.getElementById("andisha-v7-style")) return;
 
@@ -92,36 +116,68 @@
 
       .v7-progress {
         margin: 20px 0;
-        padding: 15px;
-        border-radius: 14px;
-        background: rgba(255,255,255,.08);
+        padding: 16px;
+        border-radius: 16px;
+        background: rgba(255,255,255,.09);
+        border: 1px solid rgba(255,215,120,.2);
       }
 
       .v7-progress-heading {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         gap: 10px;
         flex-wrap: wrap;
+      }
+
+      .v7-percent {
+        color: #ffdf82;
+        font-size: 20px;
       }
 
       .v7-progress-track {
         display: block !important;
         width: 100% !important;
-        height: 14px !important;
-        margin-top: 12px;
+        height: 16px !important;
+        margin-top: 14px;
         overflow: hidden;
-        border-radius: 20px;
-        background: rgba(255,255,255,.18) !important;
+        border-radius: 30px;
+        background: rgba(255,255,255,.2) !important;
+        direction: ltr;
       }
 
       .v7-progress-fill {
         display: block !important;
+        width: 0%;
         height: 100% !important;
-        max-width: 100%;
-        min-width: 0;
-        border-radius: 20px;
-        background: linear-gradient(90deg, #f4d477, #e5a928) !important;
-        transition: width .7s ease;
+        border-radius: 30px;
+        background: linear-gradient(
+          90deg,
+          #e5a928,
+          #ffe99b,
+          #e5a928
+        ) !important;
+        box-shadow: 0 0 12px rgba(255,215,90,.7);
+        transition: width 1200ms cubic-bezier(.2,.8,.2,1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .v7-progress-fill::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -50%;
+        width: 40%;
+        height: 100%;
+        background: rgba(255,255,255,.55);
+        transform: skewX(-25deg);
+        animation: v7-shine 1.8s ease-in-out infinite;
+      }
+
+      @keyframes v7-shine {
+        0% { left: -50%; }
+        100% { left: 130%; }
       }
 
       .v7-mission-item {
@@ -155,6 +211,15 @@
           align-items: flex-start;
         }
       }
+
+      @media(prefers-reduced-motion: reduce) {
+        .v7-progress-fill {
+          transition: none;
+        }
+        .v7-progress-fill::after {
+          animation: none;
+        }
+      }
     `;
 
     document.head.appendChild(style);
@@ -176,6 +241,7 @@
       if (!content) return;
 
       content.innerHTML = render();
+      animateProgress(content);
     });
 
     tabs.appendChild(tab);
