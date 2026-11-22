@@ -99,6 +99,26 @@ function loadProgress() {
   }
 }
 
+function resetProgress() {
+  try {
+    localStorage.removeItem(STORAGE.score);
+    localStorage.removeItem(STORAGE.shop);
+    localStorage.removeItem(STORAGE.kitchen);
+    localStorage.removeItem(STORAGE.bank);
+    localStorage.removeItem(STORAGE.map);
+    localStorage.removeItem(STORAGE.tower);
+  } catch (error) {
+    console.error("خطا در پاک‌سازی پیشرفت:", error);
+  }
+
+  score = 0;
+  shopCompleted = false;
+  kitchenCompleted = false;
+  bankCompleted = false;
+  mapCompleted = false;
+  towerCompleted = false;
+}
+
 function completedCount() {
   return [
     shopCompleted,
@@ -199,6 +219,11 @@ function showCity() {
 
       <button data-action="story">
         مشاهده داستان ماجراجویی
+      </button>
+
+      <button data-action="reset-progress"
+        style="background:linear-gradient(135deg,#ffb3b3,#e8615e);color:#fff;margin-top:12px;font-size:14px;padding:10px 18px">
+        🔄 شروع دوباره (پاک‌کردن پیشرفت)
       </button>
     </main>
   `;
@@ -695,10 +720,6 @@ function checkTowerAnswer(answer) {
 // مدیریت مرکزی کلیک‌های بازی
 // ============================================
 
-// رویداد در مرحله capture روی خود app اجرا می‌شود.
-// رویداد به document می‌رسد تا صدای پاسخ نیز فعال شود.
-// از stopPropagation استفاده نمی‌کنیم.
-
 app.addEventListener("click", function(event) {
   const target = event.target;
 
@@ -720,6 +741,19 @@ app.addEventListener("click", function(event) {
     case "city":
       showCity();
       break;
+
+    case "reset-progress": {
+      const confirmed = window.confirm(
+        "آیا مطمئنی می‌خواهی پیشرفت بازی پاک شود؟ امتیازها و وضعیت مناطق صفر می‌شوند، اما نشان‌ها، پروفایل و یادداشت‌ها حفظ می‌شوند."
+      );
+
+      if (confirmed) {
+        resetProgress();
+        showCity();
+      }
+
+      break;
+    }
 
     case "zone": {
       const index = Number(button.dataset.zone);
@@ -834,13 +868,20 @@ showWelcome();
     if (!AudioAPI) return false;
 
     if (!audio) {
-      audio = new AudioAPI();
-      master = audio.createGain();
-      master.connect(audio.destination);
+      try {
+        audio = new AudioAPI();
+        master = audio.createGain();
+        master.connect(audio.destination);
+      } catch (error) {
+        console.warn("ساخت AudioContext ناموفق بود:", error);
+        return false;
+      }
     }
 
-    if (audio.state === "suspended") {
-      audio.resume();
+    if (audio.state === "suspended" && typeof audio.resume === "function") {
+      audio.resume().catch(function(error) {
+        console.warn("resume صدا ناموفق بود:", error);
+      });
     }
 
     master.gain.value = volume / 100;
@@ -850,6 +891,10 @@ showWelcome();
 
   function tone(freq, duration, type, strength) {
     if (!audio || !master) return;
+
+    if (audio.state === "suspended" && typeof audio.resume === "function") {
+      audio.resume().catch(function() {});
+    }
 
     const oscillator = audio.createOscillator();
     const gain = audio.createGain();
@@ -1096,7 +1141,6 @@ showWelcome();
   positionSelect.value = panelPosition;
 
   function applyPanelPosition() {
-    // پاک‌سازی مقادیر قبلی
     panel.style.left = "";
     panel.style.right = "";
     panel.style.top = "";
@@ -1144,6 +1188,15 @@ showWelcome();
 
   applyPanelPosition();
   applyPanelVisibility();
+
+  // 🔓 باز کردن قفل صوتی مرورگر با اولین لمس/کلید کاربر
+  function unlockAudioOnce() {
+    setupAudio();
+  }
+
+  document.addEventListener("pointerdown", unlockAudioOnce, { once: true });
+  document.addEventListener("touchstart", unlockAudioOnce, { once: true });
+  document.addEventListener("keydown", unlockAudioOnce, { once: true });
 
   // روشن و خاموش کردن موسیقی
   toggle.addEventListener("click", function() {
@@ -1329,7 +1382,6 @@ showWelcome();
   });
 
   // صدای پاسخ صحیح و اشتباه
-  // این listener روی document است و پیش از listener کلیک app اجرا می‌شود.
   document.addEventListener("click", function(event) {
     const target = event.target;
 
@@ -1367,7 +1419,6 @@ showWelcome();
     toggle.textContent = "🔇 خاموش کردن موسیقی";
   }
 
-  // پاک‌سازی آدرس آهنگ موقت هنگام خروج
   window.addEventListener("beforeunload", function() {
     stopMusic();
 
