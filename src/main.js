@@ -1,3 +1,4 @@
+
 "use strict";
 
 // ============================================
@@ -255,7 +256,7 @@ function showShop() {
 function checkShopAnswer(answer) {
   loadProgress();
 
-  if (shopCompleted) return showShop();
+  if (shopCompleted) return;
 
   const feedback = document.getElementById("feedback");
   const scoreElement = document.getElementById("score");
@@ -329,7 +330,7 @@ function showKitchen() {
 function checkKitchenAnswer(answer) {
   loadProgress();
 
-  if (kitchenCompleted) return showKitchen();
+  if (kitchenCompleted) return;
 
   const feedback = document.getElementById("kitchen-feedback");
   const scoreElement = document.getElementById("kitchen-score");
@@ -413,7 +414,7 @@ function showBank() {
 function checkBankAnswer(answer) {
   loadProgress();
 
-  if (bankCompleted) return showBank();
+  if (bankCompleted) return;
 
   const feedback = document.getElementById("bank-feedback");
   const scoreElement = document.getElementById("bank-score");
@@ -489,7 +490,7 @@ function showMapWorkshop() {
 function checkMapAnswer(answer) {
   loadProgress();
 
-  if (mapCompleted) return showMapWorkshop();
+  if (mapCompleted) return;
 
   const feedback = document.getElementById("map-feedback");
   const scoreElement = document.getElementById("map-score");
@@ -695,10 +696,6 @@ function checkTowerAnswer(answer) {
 // مدیریت مرکزی کلیک‌های بازی
 // ============================================
 
-// رویداد در مرحله capture روی خود app اجرا می‌شود.
-// رویداد به document می‌رسد تا صدای پاسخ نیز فعال شود.
-// از stopPropagation استفاده نمی‌کنیم.
-
 app.addEventListener("click", function(event) {
   const target = event.target;
 
@@ -763,6 +760,7 @@ showWelcome();
 
 // ============================================
 // 🎵🎧🎙️ استودیوی یکپارچه اندیشا
+// نسخه جمع‌شونده با انتخاب موقعیت
 // ============================================
 
 (function() {
@@ -774,6 +772,7 @@ showWelcome();
   const MUSIC_KEY = "andishaMusic";
   const TRACK_KEY = "andishaTrack";
   const VOLUME_KEY = "andishaVolume";
+  const POSITION_KEY = "andishaMusicPanelPosition";
 
   const oldEnabled = localStorage.getItem(MUSIC_KEY);
   const oldEnabledV2 = localStorage.getItem("andishaMusicEnabled");
@@ -787,6 +786,22 @@ showWelcome();
 
   track = Math.max(0, Math.min(2, track));
   volume = Math.max(0, Math.min(100, volume));
+
+  const validPositions = [
+    "top-right",
+    "top-left",
+    "bottom-right",
+    "bottom-left"
+  ];
+
+  let panelPosition = localStorage.getItem(POSITION_KEY) || "bottom-left";
+
+  if (!validPositions.includes(panelPosition)) {
+    panelPosition = "bottom-left";
+  }
+
+  // پنل در شروع بسته باشد
+  let panelOpen = false;
 
   const tracks = [
     {
@@ -808,6 +823,10 @@ showWelcome();
   let timer = null;
   let noteIndex = 0;
   let phoneURL = null;
+
+  // ============================================
+  // موتور صدا
+  // ============================================
 
   function setupAudio() {
     const AudioAPI = window.AudioContext || window.webkitAudioContext;
@@ -875,7 +894,6 @@ showWelcome();
     }
 
     noteIndex = 0;
-
     playNote();
 
     timer = setInterval(playNote, 420);
@@ -919,7 +937,10 @@ showWelcome();
     }, 150);
   }
 
-  // پنل استودیو
+  // ============================================
+  // ساخت پنل موسیقی
+  // ============================================
+
   const panel = document.createElement("section");
 
   panel.id = "andishaMusicStudio";
@@ -927,12 +948,12 @@ showWelcome();
 
   panel.style.cssText = `
     position:fixed;
-    left:10px;
-    bottom:10px;
     z-index:99999;
-    width:min(320px,calc(100% - 20px));
-    max-height:45vh;
+    width:min(300px,calc(100% - 16px));
+    max-height:min(60vh,420px);
     overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    box-sizing:border-box;
     padding:12px;
     border:2px solid #f5c75e;
     border-radius:16px;
@@ -942,19 +963,72 @@ showWelcome();
     font-size:13px;
     box-shadow:0 5px 20px #0005;
     text-align:center;
+    display:none;
+    overscroll-behavior:contain;
   `;
 
   panel.innerHTML = `
-    <h3 style="margin:4px 0 12px;color:#ffe18a">
-      🎵 استودیوی موسیقی اندیشا
-    </h3>
+    <div style="
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:10px;
+    ">
+      <h3 style="margin:4px 0;color:#ffe18a;font-size:15px">
+        🎵 استودیوی موسیقی اندیشا
+      </h3>
+
+      <button id="andishaMusicCollapse"
+        type="button"
+        aria-label="جمع کردن پنل"
+        style="
+          padding:7px 10px;
+          border:0;
+          border-radius:8px;
+          background:#f5c75e;
+          color:#142b52;
+          font-weight:bold;
+          cursor:pointer;
+        ">
+        ✕
+      </button>
+    </div>
+
+    <label for="andishaMusicPosition"
+      style="display:block;margin:8px 0 5px">
+      📍 موقعیت پنل
+    </label>
+
+    <select id="andishaMusicPosition"
+      aria-label="انتخاب موقعیت پنل"
+      style="
+        width:100%;
+        padding:9px;
+        margin:3px 0 10px;
+        border-radius:9px;
+        box-sizing:border-box;
+        font-family:Tahoma,sans-serif;
+      ">
+      <option value="top-right">بالا سمت راست</option>
+      <option value="top-left">بالا سمت چپ</option>
+      <option value="bottom-right">پایین سمت راست</option>
+      <option value="bottom-left">پایین سمت چپ</option>
+    </select>
 
     <button id="andishaMusicToggle" type="button">
       ${enabled ? "🔇 خاموش کردن موسیقی" : "🎶 روشن کردن موسیقی"}
     </button>
 
-    <select id="andishaTrack" aria-label="انتخاب موسیقی"
-      style="width:100%;padding:9px;margin:8px 0;border-radius:9px">
+    <select id="andishaTrack"
+      aria-label="انتخاب موسیقی"
+      style="
+        width:100%;
+        padding:9px;
+        margin:8px 0;
+        border-radius:9px;
+        box-sizing:border-box;
+      ">
       ${tracks.map((item, index) => `
         <option value="${index}">${item.name}</option>
       `).join("")}
@@ -962,20 +1036,29 @@ showWelcome();
 
     <label for="andishaVolume">🔊 میزان صدا</label>
 
-    <input id="andishaVolume" type="range"
-      min="0" max="100" value="${volume}" style="width:100%">
+    <input id="andishaVolume"
+      type="range"
+      min="0"
+      max="100"
+      value="${volume}"
+      style="width:100%;margin:8px 0">
 
     <hr style="border-color:#ffffff33">
 
     <h3 style="color:#ffe18a">🎧 موسیقی دلخواه من</h3>
 
-    <input id="andishaMusicFile" type="file"
-      accept="audio/*" style="max-width:100%;color:white">
+    <input id="andishaMusicFile"
+      type="file"
+      accept="audio/*"
+      style="max-width:100%;color:white">
 
-    <audio id="andishaPhonePlayer" controls
+    <audio id="andishaPhonePlayer"
+      controls
       style="width:100%;margin-top:8px"></audio>
 
-    <p id="andishaPhoneMessage">هنوز آهنگی انتخاب نشده است.</p>
+    <p id="andishaPhoneMessage">
+      هنوز آهنگی انتخاب نشده است.
+    </p>
 
     <hr style="border-color:#ffffff33">
 
@@ -989,29 +1072,145 @@ showWelcome();
       ⏹ توقف صدا
     </button>
 
-    <p id="andishaVoiceStatus">راهنمای صوتی آماده است.</p>
-    <p id="andishaMusicStatus">موسیقی پس‌زمینه بازی</p>
+    <p id="andishaVoiceStatus">
+      راهنمای صوتی آماده است.
+    </p>
+
+    <p id="andishaMusicStatus">
+      موسیقی پس‌زمینه بازی
+    </p>
+  `;
+
+  // ============================================
+  // دکمه شناور موسیقی
+  // ============================================
+
+  const bubble = document.createElement("button");
+
+  bubble.id = "andishaMusicBubble";
+  bubble.type = "button";
+  bubble.textContent = "🎵";
+  bubble.title = "باز کردن استودیوی موسیقی";
+  bubble.setAttribute("aria-label", "باز کردن استودیوی موسیقی");
+
+  bubble.style.cssText = `
+    position:fixed;
+    z-index:99999;
+    width:48px;
+    height:48px;
+    padding:0;
+    border:2px solid #f5c75e;
+    border-radius:50%;
+    background:#142b52;
+    color:#ffe18a;
+    font-size:23px;
+    line-height:1;
+    box-shadow:0 4px 14px #0005;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    -webkit-tap-highlight-color:transparent;
   `;
 
   document.body.appendChild(panel);
+  document.body.appendChild(bubble);
 
-  panel.querySelectorAll("button").forEach(function(button) {
-    button.style.cssText = `
-      padding:9px 12px;
-      margin:4px;
-      border:0;
-      border-radius:9px;
-      background:#f5c75e;
-      color:#142b52;
-      font-weight:bold;
-      font-family:Tahoma,sans-serif;
-      cursor:pointer;
-    `;
+  // ============================================
+  // تنظیم موقعیت پنل و دکمه شناور
+  // ============================================
+
+  function applyPosition(pos) {
+    if (!validPositions.includes(pos)) {
+      pos = "bottom-left";
+    }
+
+    panelPosition = pos;
+
+    // پاک کردن موقعیت‌های قبلی
+    panel.style.top = "auto";
+    panel.style.bottom = "auto";
+    panel.style.left = "auto";
+    panel.style.right = "auto";
+
+    bubble.style.top = "auto";
+    bubble.style.bottom = "auto";
+    bubble.style.left = "auto";
+    bubble.style.right = "auto";
+
+    // فاصله امن از لبه‌های صفحه
+    if (pos === "top-right") {
+      panel.style.top = "max(10px, env(safe-area-inset-top))";
+      panel.style.right = "8px";
+
+      bubble.style.top = "max(10px, env(safe-area-inset-top))";
+      bubble.style.right = "8px";
+    }
+
+    if (pos === "top-left") {
+      panel.style.top = "max(10px, env(safe-area-inset-top))";
+      panel.style.left = "8px";
+
+      bubble.style.top = "max(10px, env(safe-area-inset-top))";
+      bubble.style.left = "8px";
+    }
+
+    if (pos === "bottom-right") {
+      panel.style.bottom = "max(72px, calc(env(safe-area-inset-bottom) + 64px))";
+      panel.style.right = "8px";
+
+      bubble.style.bottom = "max(10px, env(safe-area-inset-bottom))";
+      bubble.style.right = "8px";
+    }
+
+    if (pos === "bottom-left") {
+      panel.style.bottom = "max(72px, calc(env(safe-area-inset-bottom) + 64px))";
+      panel.style.left = "8px";
+
+      bubble.style.bottom = "max(10px, env(safe-area-inset-bottom))";
+      bubble.style.left = "8px";
+    }
+
+    try {
+      localStorage.setItem(POSITION_KEY, pos);
+    } catch (error) {
+      console.warn("ذخیره موقعیت پنل انجام نشد:", error);
+    }
+  }
+
+  // ============================================
+  // باز و بسته کردن پنل
+  // ============================================
+
+  function openPanel() {
+    panelOpen = true;
+    panel.style.display = "block";
+    bubble.style.display = "none";
+  }
+
+  function closePanel() {
+    panelOpen = false;
+    panel.style.display = "none";
+    bubble.style.display = "flex";
+  }
+
+  bubble.addEventListener("click", function() {
+    openPanel();
   });
+
+  document.getElementById("andishaMusicCollapse")
+    .addEventListener("click", function() {
+      closePanel();
+    });
+
+  // ============================================
+  // دریافت عناصر پنل
+  // ============================================
 
   const toggle = document.getElementById("andishaMusicToggle");
   const selector = document.getElementById("andishaTrack");
   const slider = document.getElementById("andishaVolume");
+  const positionSelector = document.getElementById("andishaMusicPosition");
 
   const status = document.getElementById("andishaMusicStatus");
 
@@ -1021,9 +1220,37 @@ showWelcome();
 
   const voiceStatus = document.getElementById("andishaVoiceStatus");
 
-  selector.value = String(track);
+  // ظاهر دکمه‌های پنل
+  panel.querySelectorAll("button").forEach(function(button) {
+    if (button.id === "andishaMusicCollapse") return;
 
+    button.style.cssText += `
+      padding:9px 12px;
+      margin:4px;
+      border:0;
+      border-radius:9px;
+      background:#f5c75e;
+      color:#142b52;
+      font-weight:bold;
+      font-family:Tahoma,sans-serif;
+      cursor:pointer;
+      min-height:40px;
+    `;
+  });
+
+  selector.value = String(track);
+  positionSelector.value = panelPosition;
+
+  // اعمال موقعیت ذخیره‌شده
+  applyPosition(panelPosition);
+
+  // شروع در حالت بسته
+  closePanel();
+
+  // ============================================
   // روشن و خاموش کردن موسیقی
+  // ============================================
+
   toggle.addEventListener("click", function() {
     enabled = !enabled;
 
@@ -1041,7 +1268,10 @@ showWelcome();
     }
   });
 
+  // ============================================
   // انتخاب موسیقی
+  // ============================================
+
   selector.addEventListener("change", function() {
     track = Number(selector.value);
 
@@ -1058,7 +1288,10 @@ showWelcome();
     }
   });
 
+  // ============================================
   // کنترل صدا
+  // ============================================
+
   slider.addEventListener("input", function() {
     volume = Number(slider.value);
 
@@ -1069,7 +1302,18 @@ showWelcome();
     }
   });
 
+  // ============================================
+  // انتخاب موقعیت پنل
+  // ============================================
+
+  positionSelector.addEventListener("change", function() {
+    applyPosition(positionSelector.value);
+  });
+
+  // ============================================
   // انتخاب آهنگ از گوشی
+  // ============================================
+
   picker.addEventListener("change", function() {
     const file = picker.files[0];
 
@@ -1100,7 +1344,10 @@ showWelcome();
     if (enabled) startMusic();
   });
 
+  // ============================================
   // خواندن متن صفحه
+  // ============================================
+
   document.getElementById("andishaRead")
     .addEventListener("click", function() {
 
@@ -1159,7 +1406,10 @@ showWelcome();
       window.speechSynthesis.speak(speech);
     });
 
+  // ============================================
   // توقف راهنمای صوتی
+  // ============================================
+
   document.getElementById("andishaStop")
     .addEventListener("click", function() {
 
@@ -1177,8 +1427,10 @@ showWelcome();
     }
   });
 
+  // ============================================
   // صدای پاسخ صحیح و اشتباه
-  // این listener روی document است و پیش از listener کلیک app اجرا می‌شود.
+  // ============================================
+
   document.addEventListener("click", function(event) {
     const target = event.target;
 
@@ -1212,11 +1464,15 @@ showWelcome();
 
   }, true);
 
-  if (enabled) {
-    toggle.textContent = "🔇 خاموش کردن موسیقی";
-  }
+  // وضعیت دکمه موسیقی
+  toggle.textContent = enabled
+    ? "🔇 خاموش کردن موسیقی"
+    : "🎶 روشن کردن موسیقی";
 
-  // پاک‌سازی آدرس آهنگ موقت هنگام خروج
+  // ============================================
+  // پاک‌سازی هنگام خروج
+  // ============================================
+
   window.addEventListener("beforeunload", function() {
     stopMusic();
 
