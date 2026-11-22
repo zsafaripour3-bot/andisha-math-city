@@ -244,8 +244,6 @@ function showShop() {
       <h1>🛍️ فروشگاه هوشمند اندیشا</h1>
       <h2>مأموریت اول: شکار تخفیف!</h2>
 
-      ${isCompleted ? `<p>🏅 این مأموریت قبلاً تکمیل شده است.</p>` : ""}
-
       <p>قیمت اولیه کیف: <strong>۲۰۰٬۰۰۰ تومان</strong></p>
       <p>تخفیف فروشگاه: <strong>۲۵ درصد</strong></p>
 
@@ -253,7 +251,7 @@ function showShop() {
 
       <div class="shop-options">
         <button data-action="shop-answer" data-answer="150000" ${isCompleted ? "disabled" : ""}>
-          ۱۵۰٬۰۰۰ تومان
+          ۱۵۰٬۰۰۰ تومان ${isCompleted ? "✅" : ""}
         </button>
 
         <button data-action="shop-answer" data-answer="175000" ${isCompleted ? "disabled" : ""}>
@@ -267,11 +265,12 @@ function showShop() {
 
       <p id="feedback">
         ${isCompleted
-          ? "🎉 آفرین! پاسخ درست: ۱۵۰٬۰۰۰ تومان (۲۵٪ تخفیف = ۵۰٬۰۰۰ تومان)"
+          ? "🏅 این مأموریت قبلاً تکمیل شده است. پاسخ درست با ✅ مشخص شده."
           : "یکی از پاسخ‌ها را انتخاب کن."}
       </p>
       <p id="score">⭐ امتیاز: ${score}</p>
 
+      ${isCompleted ? `<button data-action="replay" data-zone-name="shop" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت</button>` : ""}
       <button data-action="city">بازگشت به شهرک 🏙️</button>
     </main>
   `;
@@ -328,24 +327,23 @@ function showKitchen() {
       <h1>🍰 آشپزخانه مرکزی اندیشا</h1>
       <h2>مأموریت دوم: دستور پخت قهرمانانه!</h2>
 
-      ${isCompleted ? `<p>🏅 این مأموریت قبلاً تکمیل شده است.</p>` : ""}
-
       <p>برای ۴ نفر به ۲ پیمانه آرد نیاز داریم.</p>
       <h3>برای ۸ نفر چند پیمانه آرد لازم داریم؟</h3>
 
       <div class="shop-options">
         <button data-action="kitchen-answer" data-answer="3" ${isCompleted ? "disabled" : ""}>۳ پیمانه</button>
-        <button data-action="kitchen-answer" data-answer="4" ${isCompleted ? "disabled" : ""}>۴ پیمانه</button>
+        <button data-action="kitchen-answer" data-answer="4" ${isCompleted ? "disabled" : ""}>۴ پیمانه ${isCompleted ? "✅" : ""}</button>
         <button data-action="kitchen-answer" data-answer="6" ${isCompleted ? "disabled" : ""}>۶ پیمانه</button>
       </div>
 
       <p id="kitchen-feedback">
         ${isCompleted
-          ? "🎉 آفرین! پاسخ درست: ۴ پیمانه (۲ × ۲)"
+          ? "🏅 این مأموریت قبلاً تکمیل شده است. پاسخ درست با ✅ مشخص شده."
           : "پاسخ درست را انتخاب کن قهرمان!"}
       </p>
       <p id="kitchen-score">⭐ امتیاز: ${score}</p>
 
+      ${isCompleted ? `<button data-action="replay" data-zone-name="kitchen" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت</button>` : ""}
       <button data-action="city">بازگشت به شهرک 🏙️</button>
     </main>
   `;
@@ -402,8 +400,6 @@ function showBank() {
       <h1>🏦 بانک اندیشا</h1>
       <h2>مأموریت سوم: راز درصد!</h2>
 
-      ${isCompleted ? `<p>🏅 این مأموریت قبلاً تکمیل شده است.</p>` : ""}
-
       <p>مبلغ سپرده فرضی: <strong>۵۰۰٬۰۰۰ تومان</strong></p>
       <p>درصد پاداش: <strong>۱۰ درصد</strong></p>
 
@@ -411,7 +407,7 @@ function showBank() {
 
       <div class="shop-options">
         <button data-action="bank-answer" data-answer="50000" ${isCompleted ? "disabled" : ""}>
-          ۵۰٬۰۰۰ تومان
+          ۵۰٬۰۰۰ تومان ${isCompleted ? "✅" : ""}
         </button>
 
         <button data-action="bank-answer" data-answer="100000" ${isCompleted ? "disabled" : ""}>
@@ -425,11 +421,12 @@ function showBank() {
 
       <p id="bank-feedback">
         ${isCompleted
-          ? "🎉 آفرین! پاسخ درست: ۵۰٬۰۰۰ تومان (۵۰۰٬۰۰۰ ÷ ۱۰)"
+          ? "🏅 این مأموریت قبلاً تکمیل شده است. پاسخ درست با ✅ مشخص شده."
           : "با دقت فکر کن و پاسخ را انتخاب کن."}
       </p>
       <p id="bank-score">⭐ امتیاز: ${score}</p>
 
+      ${isCompleted ? `<button data-action="replay" data-zone-name="bank" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت</button>` : ""}
       <button data-action="city">بازگشت به شهرک 🏙️</button>
     </main>
   `;
@@ -486,8 +483,6 @@ function showMapWorkshop() {
       <h1>📐 کارگاه نقشه‌سازی اندیشا</h1>
       <h2>مأموریت چهارم: طراح شهرک باش!</h2>
 
-      ${isCompleted ? `<p>🏅 این مأموریت قبلاً تکمیل شده است.</p>` : ""}
-
       <p>هر ۱ سانتی‌متر روی نقشه برابر با ۲ متر در واقعیت است.</p>
       <p>📏 فاصله مدرسه تا پارک روی نقشه: <strong>۷ سانتی‌متر</strong></p>
 
@@ -495,17 +490,18 @@ function showMapWorkshop() {
 
       <div class="shop-options">
         <button data-action="map-answer" data-answer="12" ${isCompleted ? "disabled" : ""}>۱۲ متر</button>
-        <button data-action="map-answer" data-answer="14" ${isCompleted ? "disabled" : ""}>۱۴ متر</button>
+        <button data-action="map-answer" data-answer="14" ${isCompleted ? "disabled" : ""}>۱۴ متر ${isCompleted ? "✅" : ""}</button>
         <button data-action="map-answer" data-answer="16" ${isCompleted ? "disabled" : ""}>۱۶ متر</button>
       </div>
 
       <p id="map-feedback">
         ${isCompleted
-          ? "🎉 آفرین مهندس! پاسخ درست: ۱۴ متر (۷ × ۲)"
+          ? "🏅 این مأموریت قبلاً تکمیل شده است. پاسخ درست با ✅ مشخص شده."
           : "پاسخ را انتخاب کن، مهندس کوچک!"}
       </p>
       <p id="map-score">⭐ امتیاز: ${score}</p>
 
+      ${isCompleted ? `<button data-action="replay" data-zone-name="map" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت</button>` : ""}
       <button data-action="city">بازگشت به شهرک 🏙️</button>
     </main>
   `;
@@ -617,6 +613,7 @@ function showTower() {
 
         <h3>🌟 نشان طلایی قهرمانی مبارک!</h3>
 
+        <button data-action="replay" data-zone-name="tower" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت برج</button>
         <button data-action="city">بازگشت به شهرک 🏙️</button>
       </main>
     `;
@@ -699,6 +696,7 @@ function checkTowerAnswer(answer) {
 
           <h3>🌟 نشان طلایی قهرمانی مبارک!</h3>
 
+          <button data-action="replay" data-zone-name="tower" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت برج</button>
           <button data-action="city">بازگشت به شهرک 🏙️</button>
         </main>
       `;
@@ -752,6 +750,16 @@ app.addEventListener("click", function(event) {
         showCity();
       }
 
+      break;
+    }
+
+    case "replay": {
+      const zoneName = button.dataset.zoneName;
+      if (zoneName === "shop") { shopCompleted = false; saveProgress(); showShop(); }
+      else if (zoneName === "kitchen") { kitchenCompleted = false; saveProgress(); showKitchen(); }
+      else if (zoneName === "bank") { bankCompleted = false; saveProgress(); showBank(); }
+      else if (zoneName === "map") { mapCompleted = false; saveProgress(); showMapWorkshop(); }
+      else if (zoneName === "tower") { towerCompleted = false; saveProgress(); showTower(); }
       break;
     }
 
