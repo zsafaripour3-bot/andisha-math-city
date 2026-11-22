@@ -99,10 +99,13 @@
       background:#142b52; color:white; padding:12px 15px;
       font:bold 14px Tahoma; box-shadow:0 4px 16px #0004;
       cursor:pointer;
+      max-width:48vw;
     }
     #andisha-v3-overlay {
       display:none; position:fixed; inset:0; z-index:100002;
-      background:#07152bd9; padding:12px; overflow:auto;
+      background:#07152bd9; padding:12px;
+      padding-bottom:max(12px, env(safe-area-inset-bottom));
+      overflow:auto;
       box-sizing:border-box; font-family:Tahoma,sans-serif;
     }
     #andisha-v3-panel {
