@@ -1,3 +1,4 @@
+
 "use strict";
 
 // ============================================
@@ -1312,7 +1313,10 @@ showWelcome();
     if (enabled) startMusic();
   });
 
-  // خواندن متن صفحه
+  // ============================================
+  // 🔊 خواندن متن صفحه با انتخاب صدای فارسی
+  // ============================================
+
   document.getElementById("andishaRead")
     .addEventListener("click", function() {
 
@@ -1322,7 +1326,9 @@ showWelcome();
         return;
       }
 
-      window.speechSynthesis.cancel();
+      const synth = window.speechSynthesis;
+
+      synth.cancel();
 
       const main = document.querySelector("#app main");
 
@@ -1349,26 +1355,97 @@ showWelcome();
         return;
       }
 
-      const speech = new SpeechSynthesisUtterance(message);
+      voiceStatus.textContent =
+        "⏳ در حال جست‌وجوی صدای فارسی...";
 
-      speech.lang = "fa-IR";
-      speech.rate = 0.88;
-      speech.pitch = 1;
+      let finished = false;
+      let voiceTimeout = null;
 
-      speech.onstart = function() {
-        voiceStatus.textContent = "🔊 در حال خواندن...";
-      };
+      function findPersianVoice() {
+        const voices = synth.getVoices();
 
-      speech.onend = function() {
-        voiceStatus.textContent = "خواندن تمام شد 🌟";
-      };
+        return voices.find(function(voice) {
+          return voice.lang.toLowerCase() === "fa-ir";
+        }) || voices.find(function(voice) {
+          return voice.lang.toLowerCase().startsWith("fa");
+        });
+      }
 
-      speech.onerror = function() {
-        voiceStatus.textContent =
-          "صدای فارسی گوشی را بررسی کن.";
-      };
+      function removeVoiceListeners() {
+        synth.removeEventListener(
+          "voiceschanged",
+          checkVoices
+        );
 
-      window.speechSynthesis.speak(speech);
+        if (voiceTimeout) {
+          clearTimeout(voiceTimeout);
+          voiceTimeout = null;
+        }
+      }
+
+      function speakPersian() {
+        if (finished) return;
+
+        const persianVoice = findPersianVoice();
+
+        if (!persianVoice) return;
+
+        finished = true;
+        removeVoiceListeners();
+
+        synth.cancel();
+
+        const speech = new SpeechSynthesisUtterance(message);
+
+        speech.voice = persianVoice;
+        speech.lang = persianVoice.lang;
+        speech.rate = 0.88;
+        speech.pitch = 1;
+
+        speech.onstart = function() {
+          voiceStatus.textContent =
+            "🔊 در حال خواندن فارسی...";
+        };
+
+        speech.onend = function() {
+          voiceStatus.textContent =
+            "خواندن تمام شد 🌟";
+        };
+
+        speech.onerror = function() {
+          voiceStatus.textContent =
+            "پخش صدای فارسی با مشکل روبه‌رو شد.";
+        };
+
+        synth.speak(speech);
+      }
+
+      function checkVoices() {
+        speakPersian();
+      }
+
+      synth.addEventListener(
+        "voiceschanged",
+        checkVoices
+      );
+
+      // بررسی اولیه صداهای موجود
+      speakPersian();
+
+      // فرصت برای بارگذاری صداهای گوشی
+      voiceTimeout = setTimeout(function() {
+        if (finished) return;
+
+        speakPersian();
+
+        if (!finished) {
+          finished = true;
+          removeVoiceListeners();
+
+          voiceStatus.textContent =
+            "صدای فارسی پیدا نشد. زبان فارسی را در تنظیمات گفتار گوشی نصب یا فعال کن.";
+        }
+      }, 2000);
     });
 
   // توقف راهنمای صوتی
