@@ -1,9 +1,10 @@
+
 "use strict";
 
 /* ============================================
-   ANDISHA CITY WORLD V1.1
-   اصلاح موقعیت دکمه شهر سه‌بعدی
-   افزونه مستقل
+   ANDISHA CITY WORLD V1.2
+   اتصال مستقیم ساختمان‌ها به بازی اصلی
+   افزونه مستقل - بدون تغییر main.js
    ============================================ */
 
 (function () {
@@ -341,10 +342,79 @@
     document.head.appendChild(style);
   }
 
+  function showToast(message) {
+    const old = document.querySelector(".acw-toast");
+    if (old) old.remove();
+
+    const toast = document.createElement("div");
+    toast.className = "acw-toast";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    window.setTimeout(function () {
+      toast.remove();
+    }, 2600);
+  }
+
+  function openCity() {
+    const city = document.getElementById("andisha-city-world");
+
+    if (city) {
+      city.classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+  }
+
+  function closeCity() {
+    const city = document.getElementById("andisha-city-world");
+
+    if (city) {
+      city.classList.remove("open");
+    }
+
+    document.body.style.overflow = "";
+  }
+
+  /* اتصال ساختمان به فرمان اصلی main.js */
+  function enterMainZone(index) {
+    const app = document.getElementById("app");
+
+    if (!app) return false;
+
+    // اگر دکمه اصلی وجود دارد، همان را اجرا کن
+    const originalButton = Array.from(
+      app.querySelectorAll('button[data-action="zone"]')
+    ).find(function (button) {
+      return Number(button.dataset.zone) === index;
+    });
+
+    if (originalButton) {
+      originalButton.click();
+      return true;
+    }
+
+    // اگر دکمه در صفحه فعلی وجود ندارد،
+    // یک دکمه موقت برای اجرای رویداد اصلی بساز
+    const proxyButton = document.createElement("button");
+
+    proxyButton.type = "button";
+    proxyButton.dataset.action = "zone";
+    proxyButton.dataset.zone = String(index);
+    proxyButton.hidden = true;
+
+    app.appendChild(proxyButton);
+
+    proxyButton.click();
+    proxyButton.remove();
+
+    return true;
+  }
+
   function createCity() {
     if (document.getElementById("andisha-city-world")) return;
 
     const overlay = document.createElement("section");
+
     overlay.id = "andisha-city-world";
     overlay.setAttribute("aria-label", "شهرک سه‌بعدی اندیشا");
 
@@ -399,54 +469,36 @@
     `;
 
     document.body.appendChild(overlay);
-    overlay.querySelector(".acw-close").addEventListener("click", closeCity);
+
+    overlay.querySelector(".acw-close").addEventListener(
+      "click",
+      closeCity
+    );
 
     overlay.addEventListener("click", function (event) {
-      const building = event.target.closest("[data-zone-index]");
+      const target = event.target;
+
+      if (!target || typeof target.closest !== "function") return;
+
+      const building = target.closest("[data-zone-index]");
+
       if (!building) return;
 
-      const index = building.dataset.zoneIndex;
-      const originalButton = Array.from(
-        document.querySelectorAll('#app button[data-action="zone"]')
-      ).find(function (button) {
-        return button.dataset.zone === index;
-      });
+      const index = Number(building.dataset.zoneIndex);
 
-      if (originalButton) {
-        closeCity();
-        originalButton.click();
-      } else {
-        showToast("ساختمان انتخاب شد؛ دکمه ورود آن در بازی اصلی پیدا نشد.");
+      if (!Number.isInteger(index) || index < 0 || index > 4) {
+        showToast("ساختمان انتخاب‌شده معتبر نیست.");
+        return;
+      }
+
+      closeCity();
+
+      const success = enterMainZone(index);
+
+      if (!success) {
+        showToast("بخش اصلی بازی در دسترس نیست.");
       }
     });
-  }
-
-  function showToast(message) {
-    const old = document.querySelector(".acw-toast");
-    if (old) old.remove();
-
-    const toast = document.createElement("div");
-    toast.className = "acw-toast";
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    window.setTimeout(function () {
-      toast.remove();
-    }, 2600);
-  }
-
-  function openCity() {
-    const city = document.getElementById("andisha-city-world");
-    if (city) {
-      city.classList.add("open");
-      document.body.style.overflow = "hidden";
-    }
-  }
-
-  function closeCity() {
-    const city = document.getElementById("andisha-city-world");
-    if (city) city.classList.remove("open");
-    document.body.style.overflow = "";
   }
 
   function init() {
@@ -456,9 +508,11 @@
     if (document.getElementById("andisha-city-launcher")) return;
 
     const launcher = document.createElement("button");
+
     launcher.id = "andisha-city-launcher";
     launcher.type = "button";
     launcher.textContent = "🏙️ شهرک سه‌بعدی";
+
     launcher.addEventListener("click", openCity);
 
     document.body.appendChild(launcher);
@@ -467,7 +521,7 @@
       if (event.key === "Escape") closeCity();
     });
 
-    console.log("ANDISHA CITY WORLD V1.1 READY");
+    console.log("ANDISHA CITY WORLD V1.2 READY");
   }
 
   if (document.readyState === "loading") {
