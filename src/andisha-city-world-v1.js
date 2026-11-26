@@ -1,10 +1,9 @@
-
 "use strict";
 
 /* ============================================
-   ANDISHA CITY WORLD V1
-   شهرک سه‌بعدی فانتزی و رنگارنگ
-   افزونه مستقل - بدون تغییر main.js
+   ANDISHA CITY WORLD V1.1
+   اصلاح موقعیت دکمه شهر سه‌بعدی
+   افزونه مستقل
    ============================================ */
 
 (function () {
@@ -28,17 +27,20 @@
     style.textContent = `
       #andisha-city-launcher {
         position: fixed;
-        z-index: 9990;
-        bottom: 20px;
+        z-index: 9998;
+        bottom: 85px;
         right: 16px;
-        border: 2px solid rgba(255,255,255,.8);
-        border-radius: 18px;
-        padding: 12px 17px;
+        border: 2px solid rgba(255,255,255,.9);
+        border-radius: 20px;
+        padding: 13px 18px;
         background: linear-gradient(135deg,#183c79,#386bd0);
         color: white;
-        font: bold 14px inherit;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 900;
         box-shadow: 0 8px 25px #142b5260;
         cursor: pointer;
+        transition: transform .2s ease;
       }
 
       #andisha-city-launcher:active {
@@ -149,8 +151,7 @@
         position: absolute;
         inset: 180px 2% 0;
         border-radius: 48% 48% 15px 15px;
-        background:
-          radial-gradient(ellipse at 50% 45%,#a9e6a5,#70c88f 70%);
+        background: radial-gradient(ellipse at 50% 45%,#a9e6a5,#70c88f 70%);
         box-shadow: inset 0 12px 25px #ffffff50,
                     0 18px 35px #327c6c30;
         transform: perspective(700px) rotateX(12deg);
@@ -217,9 +218,8 @@
         border: 3px solid #ffffff;
         border-radius: 12px 12px 5px 5px;
         background: var(--house-color);
-        box-shadow:
-          9px 9px 0 var(--house-side),
-          0 12px 20px #27576a45;
+        box-shadow: 9px 9px 0 var(--house-side),
+                    0 12px 20px #27576a45;
         transform: skewY(-3deg);
       }
 
@@ -247,21 +247,10 @@
         border: 2px solid #ffffff;
       }
 
-      .acw-building:nth-child(2) .acw-house {
-        height: 105px;
-      }
-
-      .acw-building:nth-child(3) .acw-house {
-        height: 92px;
-      }
-
-      .acw-building:nth-child(4) .acw-house {
-        height: 78px;
-      }
-
-      .acw-building:nth-child(5) .acw-house {
-        height: 118px;
-      }
+      .acw-building:nth-child(2) .acw-house { height: 105px; }
+      .acw-building:nth-child(3) .acw-house { height: 92px; }
+      .acw-building:nth-child(4) .acw-house { height: 78px; }
+      .acw-building:nth-child(5) .acw-house { height: 118px; }
 
       .acw-building:nth-child(5) .acw-house::before {
         background: #7056bc;
@@ -410,7 +399,6 @@
     `;
 
     document.body.appendChild(overlay);
-
     overlay.querySelector(".acw-close").addEventListener("click", closeCity);
 
     overlay.addEventListener("click", function (event) {
@@ -465,6 +453,8 @@
     addStyles();
     createCity();
 
+    if (document.getElementById("andisha-city-launcher")) return;
+
     const launcher = document.createElement("button");
     launcher.id = "andisha-city-launcher";
     launcher.type = "button";
@@ -477,7 +467,7 @@
       if (event.key === "Escape") closeCity();
     });
 
-    console.log("ANDISHA CITY WORLD V1 READY");
+    console.log("ANDISHA CITY WORLD V1.1 READY");
   }
 
   if (document.readyState === "loading") {
