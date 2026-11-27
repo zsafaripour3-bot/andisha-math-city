@@ -3,7 +3,7 @@
 
 // ============================================
 // 🏙️ ANDISHA SMART CITY
-// نسخه یکپارچه و اصلاح‌شده
+// MAIN.JS - UNIFIED VERSION
 // ============================================
 
 const app = document.getElementById("app");
@@ -73,6 +73,10 @@ const zones = [
   }
 ];
 
+// ============================================
+// ذخیره و بازیابی
+// ============================================
+
 function saveProgress() {
   try {
     localStorage.setItem(STORAGE.score, String(score));
@@ -102,12 +106,9 @@ function loadProgress() {
 
 function resetProgress() {
   try {
-    localStorage.removeItem(STORAGE.score);
-    localStorage.removeItem(STORAGE.shop);
-    localStorage.removeItem(STORAGE.kitchen);
-    localStorage.removeItem(STORAGE.bank);
-    localStorage.removeItem(STORAGE.map);
-    localStorage.removeItem(STORAGE.tower);
+    Object.keys(STORAGE).forEach(function(key) {
+      localStorage.removeItem(STORAGE[key]);
+    });
   } catch (error) {
     console.error("خطا در پاک‌سازی پیشرفت:", error);
   }
@@ -118,6 +119,12 @@ function resetProgress() {
   bankCompleted = false;
   mapCompleted = false;
   towerCompleted = false;
+
+  shopAttempts = 0;
+  kitchenAttempts = 0;
+  bankAttempts = 0;
+  mapAttempts = 0;
+  towerStep = 0;
 }
 
 function completedCount() {
@@ -188,7 +195,7 @@ function showCity() {
       <p>🏅 مناطق تکمیل‌شده: ${completedCount()} از ۵</p>
 
       <section class="city-map">
-        ${zones.map((zone, i) => {
+        ${zones.map(function(zone, i) {
           const completed = [
             shopCompleted,
             kitchenCompleted,
@@ -302,7 +309,9 @@ function checkShopAnswer(answer) {
     `;
 
     app.querySelectorAll('[data-action="shop-answer"]')
-      .forEach(button => button.disabled = true);
+      .forEach(function(button) {
+        button.disabled = true;
+      });
 
   } else {
     shopAttempts++;
@@ -375,7 +384,9 @@ function checkKitchenAnswer(answer) {
     `;
 
     app.querySelectorAll('[data-action="kitchen-answer"]')
-      .forEach(button => button.disabled = true);
+      .forEach(function(button) {
+        button.disabled = true;
+      });
 
   } else {
     kitchenAttempts++;
@@ -458,7 +469,9 @@ function checkBankAnswer(answer) {
     `;
 
     app.querySelectorAll('[data-action="bank-answer"]')
-      .forEach(button => button.disabled = true);
+      .forEach(function(button) {
+        button.disabled = true;
+      });
 
   } else {
     bankAttempts++;
@@ -532,7 +545,9 @@ function checkMapAnswer(answer) {
     `;
 
     app.querySelectorAll('[data-action="map-answer"]')
-      .forEach(button => button.disabled = true);
+      .forEach(function(button) {
+        button.disabled = true;
+      });
 
   } else {
     mapAttempts++;
@@ -594,6 +609,40 @@ const towerQuestions = [
   }
 ];
 
+// اتصال امن پاسخ برج به سیستم‌های جانبی
+window.andishaGetExpectedAnswer = function(action) {
+  const fixed = {
+    "shop-answer": 150000,
+    "kitchen-answer": 4,
+    "bank-answer": 50000,
+    "map-answer": 14
+  };
+
+  if (action === "tower-answer") {
+    return towerQuestions[towerStep]
+      ? towerQuestions[towerStep].answer
+      : null;
+  }
+
+  return Object.prototype.hasOwnProperty.call(fixed, action)
+    ? fixed[action]
+    : null;
+};
+
+// برای سازگاری با افزونه‌هایی که این نام‌ها را می‌خوانند
+window.towerQuestions = towerQuestions;
+
+Object.defineProperty(window, "towerStep", {
+  configurable: true,
+  get: function() {
+    return towerStep;
+  }
+});
+
+// ============================================
+// نمایش برج
+// ============================================
+
 function showTower() {
   loadProgress();
 
@@ -614,7 +663,11 @@ function showTower() {
 
         <h3>🌟 نشان طلایی قهرمانی مبارک!</h3>
 
-        <button data-action="replay" data-zone-name="tower" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت برج</button>
+        <button data-action="replay" data-zone-name="tower"
+          style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">
+          🔄 تکرار مأموریت برج
+        </button>
+
         <button data-action="city">بازگشت به شهرک 🏙️</button>
       </main>
     `;
@@ -643,13 +696,15 @@ function showTowerQuestion() {
       <p>${q.question}</p>
 
       <div class="shop-options">
-        ${q.options.map(option => `
-          <button
-            data-action="tower-answer"
-            data-answer="${option.value}">
-            ${option.text}
-          </button>
-        `).join("")}
+        ${q.options.map(function(option) {
+          return `
+            <button
+              data-action="tower-answer"
+              data-answer="${option.value}">
+              ${option.text}
+            </button>
+          `;
+        }).join("")}
       </div>
 
       <p id="tower-feedback">🤖 اندی: هر چهار قفل را باز کن!</p>
@@ -697,7 +752,11 @@ function checkTowerAnswer(answer) {
 
           <h3>🌟 نشان طلایی قهرمانی مبارک!</h3>
 
-          <button data-action="replay" data-zone-name="tower" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت برج</button>
+          <button data-action="replay" data-zone-name="tower"
+            style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">
+            🔄 تکرار مأموریت برج
+          </button>
+
           <button data-action="city">بازگشت به شهرک 🏙️</button>
         </main>
       `;
@@ -756,11 +815,34 @@ app.addEventListener("click", function(event) {
 
     case "replay": {
       const zoneName = button.dataset.zoneName;
-      if (zoneName === "shop") { shopCompleted = false; saveProgress(); showShop(); }
-      else if (zoneName === "kitchen") { kitchenCompleted = false; saveProgress(); showKitchen(); }
-      else if (zoneName === "bank") { bankCompleted = false; saveProgress(); showBank(); }
-      else if (zoneName === "map") { mapCompleted = false; saveProgress(); showMapWorkshop(); }
-      else if (zoneName === "tower") { towerCompleted = false; saveProgress(); showTower(); }
+
+      if (zoneName === "shop") {
+        shopCompleted = false;
+        saveProgress();
+        showShop();
+
+      } else if (zoneName === "kitchen") {
+        kitchenCompleted = false;
+        saveProgress();
+        showKitchen();
+
+      } else if (zoneName === "bank") {
+        bankCompleted = false;
+        saveProgress();
+        showBank();
+
+      } else if (zoneName === "map") {
+        mapCompleted = false;
+        saveProgress();
+        showMapWorkshop();
+
+      } else if (zoneName === "tower") {
+        towerCompleted = false;
+        towerStep = 0;
+        saveProgress();
+        showTower();
+      }
+
       break;
     }
 
@@ -800,19 +882,22 @@ app.addEventListener("click", function(event) {
   }
 }, true);
 
+// ============================================
 // اجرای صفحه شروع
+// ============================================
+
 loadProgress();
 showWelcome();
 
 // ============================================
-// 🎵🎧🎙️ استودیوی یکپارچه اندیشا
+// 🎵🎧 ANDISHA UNIFIED MUSIC STUDIO V7
 // ============================================
 
 (function() {
   "use strict";
 
-  if (window.__andishaUnifiedStudio) return;
-  window.__andishaUnifiedStudio = true;
+  if (window.__andishaUnifiedStudioV7) return;
+  window.__andishaUnifiedStudioV7 = true;
 
   const MUSIC_KEY = "andishaMusic";
   const TRACK_KEY = "andishaTrack";
@@ -867,12 +952,24 @@ showWelcome();
   let timer = null;
   let noteIndex = 0;
   let phoneURL = null;
+  let player = null;
 
   let status = null;
   let voiceStatus = null;
 
+  let voiceActive = false;
+  let feedbackBusy = false;
+
+  let resumeMusicAfterVoice = false;
+  let resumePhoneAfterVoice = false;
+
+  let feedbackTimer = null;
+
+  const activeOscillators = new Set();
+
   function setupAudio() {
-    const AudioAPI = window.AudioContext || window.webkitAudioContext;
+    const AudioAPI =
+      window.AudioContext || window.webkitAudioContext;
 
     if (!AudioAPI) return false;
 
@@ -887,9 +984,12 @@ showWelcome();
       }
     }
 
-    if (audio.state === "suspended" && typeof audio.resume === "function") {
+    if (
+      audio.state === "suspended" &&
+      typeof audio.resume === "function"
+    ) {
       audio.resume().catch(function(error) {
-        console.warn("resume صدا ناموفق بود:", error);
+        console.warn("فعال‌سازی صدا ناموفق بود:", error);
       });
     }
 
@@ -898,59 +998,99 @@ showWelcome();
     return true;
   }
 
-  function tone(freq, duration, type, strength) {
-    if (!audio || !master) return;
+  function stopGeneratedSounds() {
+    activeOscillators.forEach(function(oscillator) {
+      try {
+        oscillator.stop();
+      } catch (error) {}
+    });
 
-    if (audio.state === "suspended" && typeof audio.resume === "function") {
-      audio.resume().catch(function() {});
-    }
+    activeOscillators.clear();
+  }
+
+  function tone(freq, duration, type, strength, startAt) {
+    if (!setupAudio()) return;
 
     const oscillator = audio.createOscillator();
     const gain = audio.createGain();
+
+    const startTime =
+      typeof startAt === "number"
+        ? startAt
+        : audio.currentTime + 0.02;
 
     oscillator.type = type || "sine";
     oscillator.frequency.value = freq;
 
     gain.gain.setValueAtTime(
       strength || 0.1,
-      audio.currentTime
+      startTime
     );
 
     gain.gain.exponentialRampToValueAtTime(
       0.001,
-      audio.currentTime + duration
+      startTime + duration
     );
 
     oscillator.connect(gain);
     gain.connect(master);
 
-    oscillator.start();
-    oscillator.stop(audio.currentTime + duration);
+    activeOscillators.add(oscillator);
+
+    oscillator.onended = function() {
+      activeOscillators.delete(oscillator);
+      oscillator.disconnect();
+      gain.disconnect();
+    };
+
+    oscillator.start(startTime);
+    oscillator.stop(startTime + duration);
   }
 
   function playNote() {
-    if (!enabled || !audio) return;
+    if (
+      !enabled ||
+      !audio ||
+      voiceActive ||
+      feedbackBusy ||
+      (player && !player.paused)
+    ) {
+      return;
+    }
 
     const melody = tracks[track].notes;
     const frequency = melody[noteIndex % melody.length];
 
     noteIndex++;
 
-    tone(frequency, 0.28, "triangle", 0.12);
+    tone(
+      frequency,
+      0.28,
+      "triangle",
+      0.12
+    );
   }
 
   function startMusic() {
-    if (!enabled || timer) return;
+    if (
+      !enabled ||
+      timer ||
+      voiceActive ||
+      feedbackBusy ||
+      (player && !player.paused)
+    ) {
+      return;
+    }
 
     if (!setupAudio()) {
       if (status) {
-        status.textContent = "مرورگر از موسیقی پشتیبانی نمی‌کند.";
+        status.textContent =
+          "مرورگر از موسیقی پشتیبانی نمی‌کند.";
       }
       return;
     }
 
     noteIndex = 0;
-
     playNote();
 
     timer = setInterval(playNote, 420);
@@ -972,37 +1112,162 @@ showWelcome();
     }
   }
 
-  function correctSound() {
-    if (!enabled || !setupAudio()) return;
+  function resumePreviousAudio() {
+    const resumePhone = resumePhoneAfterVoice;
+    const resumeMusic = resumeMusicAfterVoice;
 
-    tone(659, 0.14, "sine", 0.16);
+    resumePhoneAfterVoice = false;
+    resumeMusicAfterVoice = false;
 
-    setTimeout(function() {
-      tone(784, 0.18, "sine", 0.16);
-    }, 130);
+    if (resumePhone && player && player.src) {
+      player.play().then(function() {
+        if (status) {
+          status.textContent =
+            "🎧 موسیقی انتخابی گوشی در حال پخش است";
+        }
+      }).catch(function() {
+        if (enabled) startMusic();
+      });
 
-    setTimeout(function() {
-      tone(988, 0.22, "sine", 0.16);
-    }, 260);
+      return;
+    }
+
+    if (resumeMusic && enabled) {
+      startMusic();
+    }
   }
 
-  function wrongSound() {
-    if (!enabled || !setupAudio()) return;
+  function beforeVoice() {
+    if (!voiceActive && !feedbackBusy) {
+      resumeMusicAfterVoice = !!timer;
 
-    tone(240, 0.2, "triangle", 0.12);
+      resumePhoneAfterVoice =
+        !!(player && !player.paused && player.src);
+    }
 
-    setTimeout(function() {
-      tone(190, 0.2, "triangle", 0.10);
-    }, 150);
+    if (feedbackTimer) {
+      clearTimeout(feedbackTimer);
+      feedbackTimer = null;
+    }
+
+    feedbackBusy = false;
+
+    stopMusic();
+    stopGeneratedSounds();
+
+    if (player && !player.paused) {
+      player.pause();
+    }
+
+    voiceActive = true;
+
+    if (status) {
+      status.textContent =
+        "🎙️ صدای راهنمای اندیشا در حال پخش است";
+    }
   }
 
-  // دکمه شناور حالت بسته
+  function afterVoice() {
+    if (!voiceActive) return;
+
+    voiceActive = false;
+
+    if (status) {
+      status.textContent = "صدای راهنما پایان یافت.";
+    }
+
+    resumePreviousAudio();
+  }
+
+  function playFeedback(correct) {
+    if (voiceActive) {
+      voiceActive = false;
+    } else {
+      if (timer) {
+        resumeMusicAfterVoice = true;
+      }
+
+      if (player && !player.paused && player.src) {
+        resumePhoneAfterVoice = true;
+      }
+    }
+
+    stopMusic();
+
+    if (player && !player.paused) {
+      player.pause();
+    }
+
+    stopGeneratedSounds();
+
+    if (feedbackTimer) {
+      clearTimeout(feedbackTimer);
+      feedbackTimer = null;
+    }
+
+    feedbackBusy = true;
+
+    if (status) {
+      status.textContent = correct
+        ? "🌟 پاسخ درست!"
+        : "🌱 دوباره تلاش کن!";
+    }
+
+    if (!enabled || !setupAudio()) {
+      finishFeedback();
+      return;
+    }
+
+    const now = audio.currentTime + 0.04;
+
+    if (correct) {
+      tone(659, 0.13, "sine", 0.16, now);
+      tone(784, 0.15, "sine", 0.16, now + 0.19);
+      tone(988, 0.20, "sine", 0.16, now + 0.40);
+
+      feedbackTimer = setTimeout(finishFeedback, 800);
+
+    } else {
+      tone(240, 0.15, "triangle", 0.12, now);
+      tone(190, 0.17, "triangle", 0.10, now + 0.22);
+
+      feedbackTimer = setTimeout(finishFeedback, 600);
+    }
+  }
+
+  function finishFeedback() {
+    if (feedbackTimer) {
+      clearTimeout(feedbackTimer);
+      feedbackTimer = null;
+    }
+
+    feedbackBusy = false;
+
+    if (!voiceActive) {
+      resumePreviousAudio();
+    }
+  }
+
+  // API هماهنگی با فایل MP3
+  window.andishaAudioCoordinator = {
+    beforeVoice: beforeVoice,
+    afterVoice: afterVoice,
+    playFeedback: playFeedback
+  };
+
+  // ============================================
+  // حباب شناور
+  // ============================================
+
   const bubble = document.createElement("button");
 
   bubble.id = "andishaMusicBubble";
   bubble.type = "button";
   bubble.textContent = "🎵";
-  bubble.setAttribute("aria-label", "باز کردن استودیوی موسیقی");
+  bubble.setAttribute(
+    "aria-label",
+    "باز کردن استودیوی موسیقی"
+  );
 
   bubble.style.cssText = `
     position:fixed;
@@ -1023,7 +1288,10 @@ showWelcome();
 
   document.body.appendChild(bubble);
 
-  // پنل استودیو
+  // ============================================
+  // پنل موسیقی
+  // ============================================
+
   const panel = document.createElement("section");
 
   panel.id = "andishaMusicStudio";
@@ -1052,6 +1320,7 @@ showWelcome();
       <h3 style="margin:0;color:#ffe18a;font-size:14px">
         🎵 استودیوی موسیقی اندیشا
       </h3>
+
       <button id="andishaMusicCollapse" type="button"
         aria-label="جمع کردن استودیو"
         style="padding:4px 9px;margin:0;border:0;border-radius:8px;background:#f5c75e;color:#142b52;font-weight:bold;cursor:pointer">
@@ -1065,21 +1334,24 @@ showWelcome();
 
     <select id="andishaTrack" aria-label="انتخاب موسیقی"
       style="width:100%;padding:9px;margin:8px 0;border-radius:9px">
-      ${tracks.map((item, index) => `
-        <option value="${index}">${item.name}</option>
-      `).join("")}
+      ${tracks.map(function(item, index) {
+        return `<option value="${index}">${item.name}</option>`;
+      }).join("")}
     </select>
 
     <label for="andishaVolume">🔊 میزان صدا</label>
 
     <input id="andishaVolume" type="range"
-      min="0" max="100" value="${volume}" style="width:100%">
+      min="0" max="100" value="${volume}"
+      style="width:100%">
 
-    <label for="andishaMusicPanelPosition" style="display:block;margin-top:8px">
+    <label for="andishaMusicPanelPosition"
+      style="display:block;margin-top:8px">
       📍 محل نمایش استودیو
     </label>
 
-    <select id="andishaMusicPanelPosition" aria-label="محل نمایش استودیو"
+    <select id="andishaMusicPanelPosition"
+      aria-label="محل نمایش استودیو"
       style="width:100%;padding:9px;margin:4px 0 8px;border-radius:9px">
       <option value="top-right">بالا راست</option>
       <option value="top-left">بالا چپ</option>
@@ -1097,28 +1369,24 @@ showWelcome();
     <audio id="andishaPhonePlayer" controls
       style="width:100%;margin-top:8px"></audio>
 
-    <p id="andishaPhoneMessage">هنوز آهنگی انتخاب نشده است.</p>
+    <p id="andishaPhoneMessage">
+      هنوز آهنگی انتخاب نشده است.
+    </p>
 
-    <hr style="border-color:#ffffff33">
+    <p id="andishaVoiceStatus">
+      سیستم صوتی اندیشا آماده است.
+    </p>
 
-    <h3 style="color:#ffe18a">🎙️ راهنمای صوتی قهرمان</h3>
-
-    <button id="andishaRead" type="button">
-      🔊 خواندن راهنمای این صفحه
-    </button>
-
-    <button id="andishaStop" type="button">
-      ⏹ توقف صدا
-    </button>
-
-    <p id="andishaVoiceStatus">راهنمای صوتی آماده است.</p>
-    <p id="andishaMusicStatus">موسیقی پس‌زمینه بازی</p>
+    <p id="andishaMusicStatus">
+      موسیقی پس‌زمینه بازی
+    </p>
   `;
 
   document.body.appendChild(panel);
 
   panel.querySelectorAll("button").forEach(function(button) {
     if (button.id === "andishaMusicCollapse") return;
+
     button.style.cssText = `
       padding:9px 12px;
       margin:4px;
@@ -1132,22 +1400,46 @@ showWelcome();
     `;
   });
 
-  const toggle = document.getElementById("andishaMusicToggle");
-  const selector = document.getElementById("andishaTrack");
-  const slider = document.getElementById("andishaVolume");
+  // ============================================
+  // اتصال کنترل‌ها
+  // ============================================
 
-  const positionSelect = document.getElementById("andishaMusicPanelPosition");
-  const collapseButton = document.getElementById("andishaMusicCollapse");
+  const toggle =
+    document.getElementById("andishaMusicToggle");
 
-  status = document.getElementById("andishaMusicStatus");
-  voiceStatus = document.getElementById("andishaVoiceStatus");
+  const selector =
+    document.getElementById("andishaTrack");
 
-  const picker = document.getElementById("andishaMusicFile");
-  const player = document.getElementById("andishaPhonePlayer");
-  const phoneMessage = document.getElementById("andishaPhoneMessage");
+  const slider =
+    document.getElementById("andishaVolume");
+
+  const positionSelect =
+    document.getElementById("andishaMusicPanelPosition");
+
+  const collapseButton =
+    document.getElementById("andishaMusicCollapse");
+
+  status =
+    document.getElementById("andishaMusicStatus");
+
+  voiceStatus =
+    document.getElementById("andishaVoiceStatus");
+
+  const picker =
+    document.getElementById("andishaMusicFile");
+
+  player =
+    document.getElementById("andishaPhonePlayer");
+
+  const phoneMessage =
+    document.getElementById("andishaPhoneMessage");
 
   selector.value = String(track);
   positionSelect.value = panelPosition;
+
+  // ============================================
+  // موقعیت پنل
+  // ============================================
 
   function applyPanelPosition() {
     panel.style.left = "";
@@ -1167,17 +1459,20 @@ showWelcome();
       panel.style.right = edge;
       bubble.style.top = edge;
       bubble.style.right = edge;
+
     } else if (panelPosition === "top-left") {
       panel.style.top = edge;
       panel.style.left = edge;
       bubble.style.top = edge;
       bubble.style.left = edge;
+
     } else if (panelPosition === "bottom-right") {
       panel.style.bottom = edge;
       panel.style.right = edge;
       bubble.style.bottom = edge;
       bubble.style.right = edge;
-    } else {
+
+    } else if (panelPosition === "bottom-left") {
       panel.style.bottom = edge;
       panel.style.left = edge;
       bubble.style.bottom = edge;
@@ -1186,28 +1481,37 @@ showWelcome();
   }
 
   function applyPanelVisibility() {
-    if (panelOpen) {
-      panel.style.display = "block";
-      bubble.style.display = "none";
-    } else {
-      panel.style.display = "none";
-      bubble.style.display = "block";
-    }
+    panel.style.display = panelOpen ? "block" : "none";
+    bubble.style.display = panelOpen ? "none" : "block";
   }
 
   applyPanelPosition();
   applyPanelVisibility();
 
-  // 🔓 باز کردن قفل صوتی مرورگر با اولین لمس/کلید کاربر
+  // ============================================
+  // باز کردن قفل صوتی مرورگر
+  // ============================================
+
   function unlockAudioOnce() {
     setupAudio();
   }
 
-  document.addEventListener("pointerdown", unlockAudioOnce, { once: true });
-  document.addEventListener("touchstart", unlockAudioOnce, { once: true });
-  document.addEventListener("keydown", unlockAudioOnce, { once: true });
+  document.addEventListener(
+    "pointerdown",
+    unlockAudioOnce,
+    { once: true }
+  );
 
+  document.addEventListener(
+    "keydown",
+    unlockAudioOnce,
+    { once: true }
+  );
+
+  // ============================================
   // روشن و خاموش کردن موسیقی
+  // ============================================
+
   toggle.addEventListener("click", function() {
     enabled = !enabled;
 
@@ -1222,10 +1526,14 @@ showWelcome();
       startMusic();
     } else {
       stopMusic();
+      stopGeneratedSounds();
     }
   });
 
+  // ============================================
   // انتخاب موسیقی
+  // ============================================
+
   selector.addEventListener("change", function() {
     track = Number(selector.value);
 
@@ -1238,11 +1546,15 @@ showWelcome();
 
     if (enabled) {
       stopMusic();
+      stopGeneratedSounds();
       startMusic();
     }
   });
 
-  // کنترل صدا
+  // ============================================
+  // میزان صدا
+  // ============================================
+
   slider.addEventListener("input", function() {
     volume = Number(slider.value);
 
@@ -1253,7 +1565,10 @@ showWelcome();
     }
   });
 
-  // انتخاب موقعیت پنل
+  // ============================================
+  // محل پنل
+  // ============================================
+
   positionSelect.addEventListener("change", function() {
     const value = positionSelect.value;
 
@@ -1261,35 +1576,37 @@ showWelcome();
 
     panelPosition = value;
 
-    try {
-      localStorage.setItem(POSITION_KEY, panelPosition);
-    } catch (error) {
-      console.warn("ذخیره موقعیت پنل موسیقی انجام نشد.", error);
-    }
+    localStorage.setItem(POSITION_KEY, panelPosition);
 
     applyPanelPosition();
   });
 
-  // جمع کردن پنل
+  // ============================================
+  // جمع و باز کردن پنل
+  // ============================================
+
   collapseButton.addEventListener("click", function() {
     panelOpen = false;
     applyPanelVisibility();
   });
 
-  // باز کردن پنل با کلیک روی حباب
   bubble.addEventListener("click", function() {
     panelOpen = true;
     applyPanelVisibility();
   });
 
+  // ============================================
   // انتخاب آهنگ از گوشی
+  // ============================================
+
   picker.addEventListener("change", function() {
     const file = picker.files[0];
 
     if (!file) return;
 
     if (!file.type.startsWith("audio/")) {
-      phoneMessage.textContent = "لطفاً فایل صوتی انتخاب کن.";
+      phoneMessage.textContent =
+        "لطفاً یک فایل صوتی انتخاب کن.";
       return;
     }
 
@@ -1306,167 +1623,36 @@ showWelcome();
       "🎵 آهنگ انتخاب شد؛ دکمه پخش را بزن!";
   });
 
-  // هنگام پخش آهنگ شخصی، موسیقی داخلی متوقف شود
-  player.addEventListener("play", stopMusic);
+  player.addEventListener("play", function() {
+    if (voiceActive || feedbackBusy) {
+      player.pause();
+      return;
+    }
+
+    stopMusic();
+    stopGeneratedSounds();
+  });
 
   player.addEventListener("ended", function() {
-    if (enabled) startMusic();
+    if (enabled && !voiceActive && !feedbackBusy) {
+      startMusic();
+    }
   });
 
   // ============================================
-  // 🔊 خواندن متن صفحه با انتخاب صدای فارسی
+  // توقف موسیقی هنگام تغییر صفحه
   // ============================================
 
-  document.getElementById("andishaRead")
-    .addEventListener("click", function() {
-
-      if (!("speechSynthesis" in window)) {
-        voiceStatus.textContent =
-          "مرورگر از راهنمای صوتی پشتیبانی نمی‌کند.";
-        return;
-      }
-
-      const synth = window.speechSynthesis;
-
-      synth.cancel();
-
-      const main = document.querySelector("#app main");
-
-      if (!main) {
-        voiceStatus.textContent =
-          "صفحه‌ای برای خواندن پیدا نشد.";
-        return;
-      }
-
-      const parts = main.querySelectorAll(
-        "h1,h2,h3,p,.shop-options button"
-      );
-
-      const message = Array.from(parts)
-        .map(function(element) {
-          return element.innerText.trim();
-        })
-        .filter(Boolean)
-        .join(". ");
-
-      if (!message) {
-        voiceStatus.textContent =
-          "متنی برای خواندن در این صفحه وجود ندارد.";
-        return;
-      }
-
-      voiceStatus.textContent =
-        "⏳ در حال جست‌وجوی صدای فارسی...";
-
-      let finished = false;
-      let voiceTimeout = null;
-
-      function findPersianVoice() {
-        const voices = synth.getVoices();
-
-        return voices.find(function(voice) {
-          return voice.lang.toLowerCase() === "fa-ir";
-        }) || voices.find(function(voice) {
-          return voice.lang.toLowerCase().startsWith("fa");
-        });
-      }
-
-      function removeVoiceListeners() {
-        synth.removeEventListener(
-          "voiceschanged",
-          checkVoices
-        );
-
-        if (voiceTimeout) {
-          clearTimeout(voiceTimeout);
-          voiceTimeout = null;
-        }
-      }
-
-      function speakPersian() {
-        if (finished) return;
-
-        const persianVoice = findPersianVoice();
-
-        if (!persianVoice) return;
-
-        finished = true;
-        removeVoiceListeners();
-
-        synth.cancel();
-
-        const speech = new SpeechSynthesisUtterance(message);
-
-        speech.voice = persianVoice;
-        speech.lang = persianVoice.lang;
-        speech.rate = 0.88;
-        speech.pitch = 1;
-
-        speech.onstart = function() {
-          voiceStatus.textContent =
-            "🔊 در حال خواندن فارسی...";
-        };
-
-        speech.onend = function() {
-          voiceStatus.textContent =
-            "خواندن تمام شد 🌟";
-        };
-
-        speech.onerror = function() {
-          voiceStatus.textContent =
-            "پخش صدای فارسی با مشکل روبه‌رو شد.";
-        };
-
-        synth.speak(speech);
-      }
-
-      function checkVoices() {
-        speakPersian();
-      }
-
-      synth.addEventListener(
-        "voiceschanged",
-        checkVoices
-      );
-
-      // بررسی اولیه صداهای موجود
-      speakPersian();
-
-      // فرصت برای بارگذاری صداهای گوشی
-      voiceTimeout = setTimeout(function() {
-        if (finished) return;
-
-        speakPersian();
-
-        if (!finished) {
-          finished = true;
-          removeVoiceListeners();
-
-          voiceStatus.textContent =
-            "صدای فارسی پیدا نشد. زبان فارسی را در تنظیمات گفتار گوشی نصب یا فعال کن.";
-        }
-      }, 2000);
-    });
-
-  // توقف راهنمای صوتی
-  document.getElementById("andishaStop")
-    .addEventListener("click", function() {
-
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-
-      voiceStatus.textContent = "صدا متوقف شد.";
-    });
-
-  // با کلیک روی بازی، خواندن قبلی متوقف شود
   app.addEventListener("click", function() {
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
   });
 
-  // صدای پاسخ صحیح و اشتباه
+  // ============================================
+  // صدای پاسخ‌ها
+  // ============================================
+
   document.addEventListener("click", function(event) {
     const target = event.target;
 
@@ -1477,39 +1663,44 @@ showWelcome();
     if (!button || button.disabled) return;
 
     const action = button.dataset.action;
+
+    const expected = window.andishaGetExpectedAnswer
+      ? window.andishaGetExpectedAnswer(action)
+      : null;
+
+    if (expected === null || expected === undefined) return;
+
     const answer = Number(button.dataset.answer);
 
-    let expected = null;
-
-    if (action === "shop-answer") expected = 150000;
-    if (action === "kitchen-answer") expected = 4;
-    if (action === "bank-answer") expected = 50000;
-    if (action === "map-answer") expected = 14;
-
-    if (action === "tower-answer") {
-      expected = towerQuestions[towerStep]?.answer ?? null;
-    }
-
-    if (expected !== null) {
-      if (answer === expected) {
-        correctSound();
-      } else {
-        wrongSound();
-      }
-    }
+    playFeedback(answer === expected);
 
   }, true);
+
+  // ============================================
+  // پاک‌سازی
+  // ============================================
+
+  window.addEventListener("beforeunload", function() {
+    stopMusic();
+    stopGeneratedSounds();
+
+    if (player) {
+      player.pause();
+    }
+
+    if (phoneURL) {
+      URL.revokeObjectURL(phoneURL);
+    }
+
+    if (audio && audio.state !== "closed") {
+      audio.close().catch(function() {});
+    }
+  });
 
   if (enabled) {
     toggle.textContent = "🔇 خاموش کردن موسیقی";
   }
 
-  window.addEventListener("beforeunload", function() {
-    stopMusic();
-
-    if (phoneURL) {
-      URL.revokeObjectURL(phoneURL);
-    }
-  });
+  console.log("ANDISHA UNIFIED MUSIC STUDIO V7 READY");
 
 })();
