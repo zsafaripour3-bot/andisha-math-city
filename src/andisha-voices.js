@@ -3,14 +3,14 @@
 
 /* ============================================
    ANDISHA VOICE SYSTEM
-   نسخه 4 - تشخیص خودکار صفحه قهرمانی
+   نسخه 5 - حذف راهنما و مدیریت تداخل صداها
    بدون تغییر main.js
    ============================================ */
 
 (function () {
 
-  if (window.__ANDISHA_VOICES_V4__) return;
-  window.__ANDISHA_VOICES_V4__ = true;
+  if (window.__ANDISHA_VOICES_V5__) return;
+  window.__ANDISHA_VOICES_V5__ = true;
 
   const files = {
     welcome: "welcome.mp3",
@@ -30,58 +30,185 @@
     "tower"
   ];
 
-  const audio = new Audio();
-  audio.preload = "auto";
+  const voice = new Audio();
+  voice.preload = "auto";
 
   let welcomePlayed = false;
   let victoryPlayed = false;
   let lastClickTime = 0;
+  let playToken = 0;
+
+  // رسانه‌هایی که پیش از صدای اندیشا در حال پخش بوده‌اند
+  let pausedMedia = [];
 
   function status(message) {
     const el = document.getElementById("andishaVoiceStatus");
     if (el) el.textContent = message;
   }
 
-  function stop() {
-    audio.pause();
-    try {
-      audio.currentTime = 0;
-    } catch (e) {}
+  /* ============================================
+     توقف و ازسرگیری صداهای دیگر صفحه
+     ============================================ */
+
+  function pauseOtherMedia() {
+
+    pausedMedia = [];
+
+    document.querySelectorAll("audio").forEach(function (item) {
+
+      if (item === voice || item.paused) return;
+
+      pausedMedia.push(item);
+      item.pause();
+
+    });
   }
 
+  function resumeOtherMedia() {
+
+    const list = pausedMedia.slice();
+    pausedMedia = [];
+
+    list.forEach(function (item) {
+
+      if (!item.isConnected) return;
+
+      const result = item.play();
+
+      if (result && result.catch) {
+        result.catch(function () {});
+      }
+
+    });
+  }
+
+  /* ============================================
+     توقف صدای اندیشا
+     ============================================ */
+
+  function stop() {
+
+    playToken++;
+
+    voice.pause();
+
+    try {
+      voice.currentTime = 0;
+    } catch (e) {}
+
+    resumeOtherMedia();
+
+    status("🔇 پخش صدا متوقف شد.");
+  }
+
+  /* ============================================
+     پخش کنترل‌شده صدا
+     ============================================ */
+
   function play(name) {
+
     if (!files[name]) return;
 
-    stop();
+    playToken++;
+    const currentToken = playToken;
 
-    audio.src = new URL(
+    voice.pause();
+
+    try {
+      voice.currentTime = 0;
+    } catch (e) {}
+
+    pauseOtherMedia();
+
+    voice.src = new URL(
       "./assets/audio/" + files[name],
       document.baseURI
     ).href;
 
     status("🎧 صدای اندیشا در حال پخش است.");
 
-    const result = audio.play();
+    const result = voice.play();
 
     if (result && result.catch) {
+
       result.catch(function (error) {
+
+        if (currentToken !== playToken) return;
+
         console.error("Andisha audio:", error);
+
         status("پخش صدا انجام نشد.");
+
+        resumeOtherMedia();
+
       });
+
     }
   }
 
   window.andishaPlayVoice = play;
   window.andishaStopVoice = stop;
 
-  audio.addEventListener("ended", function () {
+  voice.addEventListener("ended", function () {
+
     status("🌟 پخش صدا پایان یافت.");
+
+    resumeOtherMedia();
+
   });
 
-  audio.addEventListener("error", function () {
-    console.error("Audio file error:", audio.src);
+  voice.addEventListener("error", function () {
+
+    console.error("Audio file error:", voice.src);
+
     status("خطا در بارگذاری فایل صوتی.");
+
+    resumeOtherMedia();
+
   });
+
+  /* ============================================
+     حذف دکمه‌های راهنمای گفتاری
+     ============================================ */
+
+  function removeGuideButtons() {
+
+    const guideIds = [
+      "andishaRead",
+      "andishaStop"
+    ];
+
+    guideIds.forEach(function (id) {
+
+      const element = document.getElementById(id);
+
+      if (element) {
+        element.remove();
+      }
+
+    });
+  }
+
+  function startGuideRemoval() {
+
+    removeGuideButtons();
+
+    const observer = new MutationObserver(function () {
+      removeGuideButtons();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+  }
+
+  if (document.body) {
+    startGuideRemoval();
+  } else {
+    document.addEventListener("DOMContentLoaded", startGuideRemoval);
+  }
 
   /* ============================================
      تشخیص صفحه قهرمانی
@@ -90,6 +217,7 @@
   function checkVictory() {
 
     const app = document.getElementById("app");
+
     if (!app) return;
 
     const content = app.innerText || "";
@@ -112,9 +240,8 @@
     if (!isVictory) {
       victoryPlayed = false;
     }
-  }
 
-  /* مشاهده تغییرات صفحه بازی */
+  }
 
   function startVictoryObserver() {
 
@@ -136,6 +263,7 @@
     });
 
     checkVictory();
+
   }
 
   startVictoryObserver();
@@ -170,8 +298,11 @@
         text.includes("شروع ماجراجویی") &&
         !welcomePlayed
       ) {
+
         welcomePlayed = true;
+
         play("welcome");
+
       }
 
       return;
@@ -181,8 +312,11 @@
       action === "city" ||
       action === "reset-progress"
     ) {
+
       stop();
+
       victoryPlayed = false;
+
       return;
     }
 
@@ -207,30 +341,15 @@
         name !== "welcome" &&
         name !== "victory"
       ) {
+
         play(name);
+
       }
 
     }
 
   }, true);
 
-  /* توقف MP3 هنگام استفاده از راهنمای گفتاری */
-
-  document.addEventListener("click", function (event) {
-
-    const target = event.target;
-
-    if (!target || !target.closest) return;
-
-    if (
-      target.closest("#andishaRead") ||
-      target.closest("#andishaStop")
-    ) {
-      stop();
-    }
-
-  }, true);
-
-  console.log("ANDISHA VOICE SYSTEM V4 READY");
+  console.log("ANDISHA VOICE SYSTEM V5 READY");
 
 })();
