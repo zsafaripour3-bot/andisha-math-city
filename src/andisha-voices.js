@@ -1,17 +1,17 @@
-
 "use strict";
 
 /* ============================================
-   ANDISHA VOICE SYSTEM V6
-   هماهنگ با استودیوی موسیقی اندیشا
+   ANDISHA VOICE SYSTEM V3
+   SINGLE AUDIO CONTROL
+   جلوگیری از تداخل و اکو
    ============================================ */
 
-(function() {
+(function () {
 
-  if (window.__ANDISHA_VOICES_V6__) return;
-  window.__ANDISHA_VOICES_V6__ = true;
+  if (window.__ANDISHA_VOICES_V3__) return;
+  window.__ANDISHA_VOICES_V3__ = true;
 
-  const files = {
+  const audioFiles = {
     welcome: "welcome.mp3",
     shop: "shop.mp3",
     kitchen: "kitchen.mp3",
@@ -21,7 +21,7 @@
     victory: "victory.mp3"
   };
 
-  const zones = [
+  const zoneVoices = [
     "shop",
     "kitchen",
     "bank",
@@ -29,279 +29,284 @@
     "tower"
   ];
 
-  const voice = new Audio();
-  voice.preload = "auto";
+  const audio = new Audio();
 
+  audio.preload = "none";
+  audio.loop = false;
+
+  let currentVoice = "";
+  let voiceSessionActive = false;
   let welcomePlayed = false;
-  let victoryPlayed = false;
-  let lastClickTime = 0;
-  let playToken = 0;
 
-  let voicePlaying = false;
+  function setStatus(message) {
+    const status = document.getElementById(
+      "andishaVoiceStatus"
+    );
 
-  function status(message) {
-    const element = document.getElementById("andishaVoiceStatus");
-    if (element) element.textContent = message;
+    if (status) status.textContent = message;
   }
 
-  function coordinator() {
-    return window.andishaAudioCoordinator || null;
+  // پایان یکپارچه صدای راهنما
+  function finishVoice(message) {
+
+    if (!currentVoice && !voiceSessionActive) return;
+
+    currentVoice = "";
+
+    if (voiceSessionActive) {
+
+      voiceSessionActive = false;
+
+      const coordinator = window.andishaAudioCoordinator;
+
+      if (
+        coordinator &&
+        typeof coordinator.afterVoice === "function"
+      ) {
+        coordinator.afterVoice();
+      }
+    }
+
+    setStatus(message || "پخش صدا پایان یافت. 🌟");
   }
 
-  function stop(silent) {
-    playToken++;
+  // توقف صدای قبلی
+  function stopVoice(notifyCoordinator) {
 
-    voice.pause();
+    audio.pause();
 
     try {
-      voice.currentTime = 0;
+      audio.currentTime = 0;
     } catch (error) {}
 
-    const wasPlaying = voicePlaying;
-    voicePlaying = false;
+    audio.removeAttribute("src");
+    audio.load();
 
-    if (wasPlaying && !silent) {
-      const control = coordinator();
-      if (control) control.afterVoice();
-    }
+    currentVoice = "";
 
-    if (!silent) {
-      status("🔇 پخش صدا متوقف شد.");
+    if (
+      notifyCoordinator !== false &&
+      voiceSessionActive
+    ) {
+      finishVoice("صدای راهنما متوقف شد.");
     }
   }
 
-  function play(name) {
-    if (!files[name]) return;
+  // پخش صدای جدید
+  function playVoice(name) {
 
-    stop(true);
+    const filename = audioFiles[name];
 
-    const token = ++playToken;
-
-    const control = coordinator();
-
-    if (control) {
-      control.beforeVoice();
+    if (!filename) {
+      console.warn("فایل صوتی نامعتبر:", name);
+      return;
     }
 
-    voicePlaying = true;
+    // توقف فایل قبلی بدون آزادکردن موسیقی
+    stopVoice(false);
 
-    voice.src = new URL(
-      "./assets/audio/" + files[name],
+    // هماهنگی با استودیوی موسیقی V7
+    const coordinator = window.andishaAudioCoordinator;
+
+    if (!voiceSessionActive) {
+
+      if (
+        coordinator &&
+        typeof coordinator.beforeVoice === "function"
+      ) {
+        coordinator.beforeVoice();
+      }
+
+      voiceSessionActive = true;
+    }
+
+    // توقف گفتار ماشینی
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    currentVoice = name;
+
+    audio.src = new URL(
+      "./assets/audio/" + filename,
       document.baseURI
     ).href;
 
-    status("🎧 صدای اندیشا در حال پخش است.");
+    setStatus("🎧 صدای اندیشا در حال پخش است.");
 
-    const result = voice.play();
+    const playPromise = audio.play();
 
-    if (result && result.catch) {
-      result.catch(function(error) {
-        if (token !== playToken) return;
+    if (playPromise && typeof playPromise.catch === "function") {
 
-        console.warn("Andisha voice:", error);
+      playPromise.catch(function(error) {
 
-        finishVoice();
-        status("پخش صدا انجام نشد.");
+        console.warn("خطای پخش فایل صوتی:", error);
+
+        if (currentVoice === name) {
+          finishVoice("پخش صدا انجام نشد؛ فایل را بررسی کن.");
+        }
+
       });
     }
   }
 
-  function finishVoice() {
-    if (!voicePlaying) return;
-
-    voicePlaying = false;
-
-    const control = coordinator();
-
-    if (control) {
-      control.afterVoice();
-    }
-  }
-
-  voice.addEventListener("ended", function() {
-    finishVoice();
-    status("🌟 پخش صدا پایان یافت.");
+  // پایان طبیعی فایل
+  audio.addEventListener("ended", function() {
+    finishVoice("پخش صدا پایان یافت. 🌟");
   });
 
-  voice.addEventListener("error", function() {
-    finishVoice();
-    console.warn("Audio file error:", voice.src);
-    status("خطا در بارگذاری فایل صوتی.");
+  // خطای فایل
+  audio.addEventListener("error", function() {
+
+    if (!currentVoice) return;
+
+    console.error("Andisha audio error:", audio.src);
+
+    finishVoice("خطا در بارگذاری فایل صوتی.");
+
   });
 
-  window.andishaPlayVoice = play;
-  window.andishaStopVoice = stop;
+  // API عمومی
+  window.andishaPlayVoice = playVoice;
+  window.andishaStopVoice = function() {
+    stopVoice(true);
+  };
 
-  // حذف راهنمای گفتاری قدیمی
-  function removeGuideButtons() {
-    ["andishaRead", "andishaStop"].forEach(function(id) {
-      const element = document.getElementById(id);
-      if (element) element.remove();
-    });
-  }
+  // ============================================
+  // تشخیص کلیک‌های بازی
+  // ============================================
 
-  const guideObserver = new MutationObserver(removeGuideButtons);
+  function handleGameClick(event) {
 
-  function startGuideRemoval() {
-    removeGuideButtons();
-
-    guideObserver.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-  }
-
-  if (document.body) {
-    startGuideRemoval();
-  } else {
-    document.addEventListener("DOMContentLoaded", startGuideRemoval);
-  }
-
-  // تشخیص صفحه قهرمانی
-  function checkVictory() {
-    const app = document.getElementById("app");
-    if (!app) return;
-
-    const content = app.innerText || "";
-
-    const isVictory =
-      content.includes("تو قهرمان شهرک اندیشا هستی") &&
-      content.includes("امتیاز نهایی") &&
-      content.includes("نشان طلایی قهرمانی");
-
-    if (isVictory && !victoryPlayed) {
-      victoryPlayed = true;
-      play("victory");
-    }
-
-    if (!isVictory) {
-      victoryPlayed = false;
-    }
-  }
-
-  function startVictoryObserver() {
-    const app = document.getElementById("app");
-
-    if (!app) {
-      setTimeout(startVictoryObserver, 300);
-      return;
-    }
-
-    const observer = new MutationObserver(checkVictory);
-
-    observer.observe(app, {
-      childList: true,
-      subtree: true,
-      characterData: true
-    });
-
-    checkVictory();
-  }
-
-  startVictoryObserver();
-
-  // مدیریت کلیک‌های بازی
-  document.addEventListener("click", function(event) {
     const target = event.target;
 
-    if (!target || !target.closest) return;
+    if (!target || typeof target.closest !== "function") {
+      return;
+    }
 
     const button = target.closest("button[data-action]");
 
     if (!button || button.disabled) return;
 
     const action = button.dataset.action;
-    const now = Date.now();
 
-    if (now - lastClickTime < 250) return;
-
-    lastClickTime = now;
-
+    // شروع داستان
     if (action === "story") {
-      const text = button.textContent || "";
 
       if (
-        text.includes("شروع ماجراجویی") &&
+        button.textContent.indexOf("شروع ماجراجویی") !== -1 &&
         !welcomePlayed
       ) {
+
         welcomePlayed = true;
-        play("welcome");
+        playVoice("welcome");
+
+      } else {
+
+        stopVoice(true);
+
       }
 
       return;
     }
 
+    // بازگشت به شهر
     if (
       action === "city" ||
       action === "reset-progress"
     ) {
-      stop();
-      victoryPlayed = false;
+
+      stopVoice(true);
       return;
     }
 
+    // ورود به ساختمان‌ها
     if (action === "zone") {
-      const index = Number(button.dataset.zone);
 
-      if (zones[index]) {
-        play(zones[index]);
+      const index = Number(button.dataset.zone);
+      const voiceName = zoneVoices[index];
+
+      if (voiceName) {
+        playVoice(voiceName);
       }
 
       return;
     }
 
+    // تکرار صدای مأموریت
     if (action === "replay") {
-      const name = button.dataset.zoneName;
+
+      const zoneName = button.dataset.zoneName;
 
       if (
-        name &&
-        files[name] &&
-        name !== "welcome" &&
-        name !== "victory"
+        audioFiles[zoneName] &&
+        zoneName !== "welcome" &&
+        zoneName !== "victory"
       ) {
-        play(name);
+        playVoice(zoneName);
       }
 
       return;
     }
 
-    // پاسخ‌های درست و نادرست
-    const answerActions = [
-      "shop-answer",
-      "kitchen-answer",
-      "bank-answer",
-      "map-answer",
-      "tower-answer"
-    ];
+    // صدای پیروزی
+    if (
+      action === "tower-answer" &&
+      window.towerCompleted === true
+    ) {
 
-    if (answerActions.includes(action)) {
-      stop(true);
+      playVoice("victory");
+      return;
+    }
 
-      const answer = Number(button.dataset.answer);
+  }
 
-      let expected = null;
+  // اتصال به بازی اصلی
+  function attachToApp() {
 
-      if (action === "shop-answer") expected = 150000;
-      if (action === "kitchen-answer") expected = 4;
-      if (action === "bank-answer") expected = 50000;
-      if (action === "map-answer") expected = 14;
+    const app = document.getElementById("app");
 
-      if (action === "tower-answer") {
-        const questions = window.towerQuestions;
-        if (questions && questions.length) {
-          expected = questions[window.towerStep]?.answer ?? null;
-        }
-      }
+    if (!app) {
+      console.error("بخش اصلی بازی پیدا نشد.");
+      return;
+    }
 
-      const control = coordinator();
+    if (app.__andishaVoiceV3Attached) return;
 
-      if (control && expected !== null) {
-        control.playFeedback(answer === expected);
-      }
+    app.__andishaVoiceV3Attached = true;
+
+    app.addEventListener(
+      "click",
+      handleGameClick,
+      false
+    );
+
+  }
+
+  attachToApp();
+
+  // توقف هنگام استفاده از راهنمای گفتاری
+  document.addEventListener("click", function(event) {
+
+    const target = event.target;
+
+    if (!target || typeof target.closest !== "function") {
+      return;
+    }
+
+    if (
+      target.closest("#andishaRead, #andishaStop")
+    ) {
+      stopVoice(true);
     }
 
   }, true);
 
-  console.log("ANDISHA VOICE SYSTEM V6 READY");
+  // توقف هنگام خروج
+  window.addEventListener("pagehide", function() {
+    stopVoice(false);
+  });
+
+  console.log("ANDISHA VOICE SYSTEM V3 READY");
 
 })();
