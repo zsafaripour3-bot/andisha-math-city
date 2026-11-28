@@ -2,32 +2,42 @@
 "use strict";
 
 /* =========================================================
-   ANDISHA CITY LIFE V5.1
-   حرکت قهرمان + تعامل با ساختمان‌های V4.0
-   مستقل از بازی اصلی، امتیازها و سیستم صدا
+   ANDISHA CITY LIFE V5.2
+   Mobile layout fix
+   Controls and interaction panel inside the island
+   Compatible with Fantasy World V4.0
    ========================================================= */
 
 (function () {
 
-  if (window.__ANDISHA_CITY_LIFE_V51__) return;
-  window.__ANDISHA_CITY_LIFE_V51__ = true;
+  if (window.__ANDISHA_CITY_LIFE_V52__) return;
+  window.__ANDISHA_CITY_LIFE_V52__ = true;
 
   const world = document.getElementById("andisha-fantasy-world");
 
   if (!world) {
-    console.warn("ANDISHA CITY LIFE: Fantasy World not found.");
+    console.warn("ANDISHA CITY LIFE: World not found.");
     return;
   }
 
   const island = world.querySelector(".fw40-island");
+
   const buildings = Array.from(
     world.querySelectorAll(".fw40-building[data-zone-index]")
   );
 
   if (!island || buildings.length !== 5) {
-    console.warn("ANDISHA CITY LIFE: Island or buildings not found.");
+    console.warn("ANDISHA CITY LIFE: Island/buildings not found.");
     return;
   }
+
+  const names = [
+    "فروشگاه جادویی",
+    "آشپزخانه شگفتی‌ها",
+    "بانک گنجینه‌ها",
+    "سرزمین اندازه‌ها",
+    "برج افسانه‌ای"
+  ];
 
   const storageKeys = [
     "andishaShopCompleted",
@@ -37,73 +47,129 @@
     "andishaTowerCompleted"
   ];
 
-  const zoneNames = [
-    "فروشگاه جادویی",
-    "آشپزخانه شگفتی‌ها",
-    "بانک گنجینه‌ها",
-    "سرزمین اندازه‌ها",
-    "برج افسانه‌ای"
-  ];
+  const avatars = ["🧑‍🚀", "🧙‍♂️", "🦸", "🧝‍♀️", "👩‍🚀"];
 
-  const STEP = 3.5;
+  const STEP = 3;
   const NEAR_DISTANCE = 125;
 
   let x = 50;
-  let y = 88;
-  let direction = "down";
-  let moveTimer = null;
+  let y = 72;
   let currentBuilding = null;
+  let moveTimer = null;
+
+  /* ---------- Remove previous V5.1 elements ---------- */
+
+  [
+    "andisha-city-life-v51-style",
+    "andisha-city-life-v52-style",
+    "andisha-city-hero-v51",
+    "andisha-city-controls-v51",
+    "andisha-city-nearby-v51",
+    "andisha-city-life-hint-v51"
+  ].forEach(function (id) {
+    const element = document.getElementById(id);
+    if (element) element.remove();
+  });
 
   /* ---------- Styles ---------- */
 
   const style = document.createElement("style");
-  style.id = "andisha-city-life-v51-style";
+  style.id = "andisha-city-life-v52-style";
 
   style.textContent = `
+    #andisha-fantasy-world .fw40-island {
+      position: relative;
+      padding-bottom: 18px;
+    }
+
     #andisha-city-hero-v51 {
       position: absolute;
-      z-index: 20;
+      z-index: 15;
       left: 50%;
-      top: 88%;
-      width: 54px;
-      height: 62px;
+      top: 72%;
+      width: 52px;
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 43px;
+      font-size: 42px;
       line-height: 1;
       pointer-events: none;
       transform: translate(-50%, -50%);
-      filter: drop-shadow(0 7px 4px #102d4666);
+      filter: drop-shadow(0 6px 4px #102d4666);
       transition: left .12s linear, top .12s linear;
-      animation: andishaHeroFloat51 1.5s ease-in-out infinite;
+      animation: andishaHeroFloat52 1.5s ease-in-out infinite;
     }
 
-    @keyframes andishaHeroFloat51 {
+    @keyframes andishaHeroFloat52 {
       0%,100% { margin-top: 0; }
       50% { margin-top: -5px; }
     }
 
+    #andisha-city-nearby-v51 {
+      position: relative;
+      z-index: 25;
+      width: 100%;
+      min-height: 54px;
+      margin: 18px auto 10px;
+      padding: 7px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      border: 2px solid #fff;
+      border-radius: 16px;
+      color: #26345d;
+      background: linear-gradient(135deg,#fff4bd,#fff);
+      box-shadow: 0 5px 13px #102d4633;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 900;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity .2s ease;
+    }
+
+    #andisha-city-nearby-v51.show {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    #andisha-city-nearby-v51 button {
+      flex-shrink: 0;
+      padding: 9px 14px;
+      border: 0;
+      border-radius: 11px;
+      color: #fff;
+      background: linear-gradient(135deg,#1aaf83,#08775f);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 1000;
+      cursor: pointer;
+    }
+
     #andisha-city-controls-v51 {
-      position: fixed;
-      z-index: 10001;
-      left: 14px;
-      bottom: 17px;
+      position: relative;
+      z-index: 25;
+      width: max-content;
+      margin: 8px auto 5px;
       display: grid;
-      grid-template-columns: repeat(3, 43px);
-      grid-template-rows: repeat(2, 43px);
+      grid-template-columns: repeat(3,43px);
+      grid-template-rows: repeat(2,43px);
       gap: 5px;
       direction: ltr;
       touch-action: none;
     }
 
     #andisha-city-controls-v51 button {
+      width: 43px;
+      height: 43px;
       border: 2px solid #fff;
       border-radius: 13px;
       color: #fff;
       background: linear-gradient(145deg,#9364f5,#344caa);
-      box-shadow: 0 4px 0 #222e70, 0 5px 12px #0004;
-      font-size: 21px;
+      box-shadow: 0 4px 0 #222e70, 0 5px 10px #0003;
+      font-size: 20px;
       font-weight: 900;
       cursor: pointer;
       touch-action: none;
@@ -135,78 +201,26 @@
       grid-row: 2;
     }
 
-    #andisha-city-nearby-v51 {
-      position: fixed;
-      z-index: 10002;
-      left: 50%;
-      bottom: 125px;
-      width: max-content;
-      max-width: 88%;
-      display: none;
-      align-items: center;
-      gap: 9px;
-      padding: 10px 12px;
-      border: 2px solid #fff;
-      border-radius: 17px;
-      color: #26345d;
-      background: linear-gradient(135deg,#fff4bd,#fff);
-      box-shadow: 0 7px 22px #0005;
-      transform: translateX(-50%);
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 900;
-    }
-
-    #andisha-city-nearby-v51.show {
-      display: flex;
-    }
-
-    #andisha-city-nearby-v51 button {
-      flex-shrink: 0;
-      padding: 9px 13px;
-      border: 0;
-      border-radius: 11px;
-      color: #fff;
-      background: linear-gradient(135deg,#1aaf83,#08775f);
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 1000;
-      cursor: pointer;
-    }
-
-    #andisha-city-life-hint-v51 {
-      position: fixed;
-      z-index: 10000;
-      right: 12px;
-      bottom: 24px;
-      max-width: 180px;
-      padding: 9px 11px;
-      border: 1px solid #ffffff77;
-      border-radius: 13px;
-      color: #fff;
-      background: #172b66dd;
-      font-size: 10px;
-      line-height: 1.8;
-      pointer-events: none;
-    }
-
     @media(max-width:370px) {
       #andisha-city-controls-v51 {
-        left: 8px;
-        bottom: 12px;
         grid-template-columns: repeat(3,39px);
         grid-template-rows: repeat(2,39px);
       }
 
-      #andisha-city-nearby-v51 {
-        bottom: 112px;
-        font-size: 11px;
+      #andisha-city-controls-v51 button {
+        width: 39px;
+        height: 39px;
       }
 
-      #andisha-city-life-hint-v51 {
-        right: 8px;
-        bottom: 17px;
-        max-width: 145px;
+      #andisha-city-nearby-v51 {
+        gap: 5px;
+        font-size: 11px;
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      #andisha-city-hero-v51 {
+        animation: none;
       }
     }
   `;
@@ -218,7 +232,7 @@
   const hero = document.createElement("div");
   hero.id = "andisha-city-hero-v51";
   hero.textContent = "🧑‍🚀";
-  hero.setAttribute("aria-label", "قهرمان متحرک اندیشا");
+  hero.setAttribute("aria-label", "قهرمان اندیشا");
 
   island.appendChild(hero);
 
@@ -226,6 +240,22 @@
     hero.style.left = x + "%";
     hero.style.top = y + "%";
   }
+
+  /* ---------- Nearby panel ---------- */
+
+  const info = document.createElement("div");
+  info.id = "andisha-city-nearby-v51";
+
+  info.innerHTML = `
+    <span id="andisha-city-nearby-name-v51">
+      به یک ساختمان نزدیک شو
+    </span>
+    <button type="button" id="andisha-city-enter-v51">
+      ورود ✨
+    </button>
+  `;
+
+  island.appendChild(info);
 
   /* ---------- Movement controls ---------- */
 
@@ -239,35 +269,19 @@
     <button type="button" data-dir="right" aria-label="راست">▶</button>
   `;
 
-  world.appendChild(controls);
+  island.appendChild(controls);
 
-  const hint = document.createElement("div");
-  hint.id = "andisha-city-life-hint-v51";
-  hint.textContent = "با دکمه‌ها حرکت کن؛ نزدیک ساختمان‌ها برو و وارد مأموریت شو.";
-  world.appendChild(hint);
-
-  /* ---------- Nearby building panel ---------- */
-
-  const info = document.createElement("div");
-  info.id = "andisha-city-nearby-v51";
-
-  info.innerHTML = `
-    <span id="andisha-city-nearby-name-v51"></span>
-    <button type="button" id="andisha-city-enter-v51">
-      ورود ✨
-    </button>
-  `;
-
-  world.appendChild(info);
-
-  /* ---------- Helpers ---------- */
+  /* ---------- Storage helpers ---------- */
 
   function isCompleted(index) {
     try {
       const value = localStorage.getItem(storageKeys[index]);
-      return value === "true" ||
+
+      return (
+        value === "true" ||
         value === "1" ||
-        value === "completed";
+        value === "completed"
+      );
     } catch (error) {
       return false;
     }
@@ -283,8 +297,13 @@
     return world.classList.contains("open");
   }
 
+  /* ---------- Nearby detection ---------- */
+
   function showNearby(building) {
-    if (currentBuilding === building && info.classList.contains("show")) {
+    if (
+      currentBuilding === building &&
+      info.classList.contains("show")
+    ) {
       return;
     }
 
@@ -292,8 +311,9 @@
 
     const index = Number(building.dataset.zoneIndex);
 
-    world.querySelector("#andisha-city-nearby-name-v51").textContent =
-      "✨ " + zoneNames[index];
+    world.querySelector(
+      "#andisha-city-nearby-name-v51"
+    ).textContent = "✨ " + names[index];
 
     info.classList.add("show");
   }
@@ -303,10 +323,7 @@
     info.classList.remove("show");
   }
 
-  /* ---------- Detect nearby buildings ---------- */
-
   function checkNearby() {
-
     if (!isWorldOpen()) {
       hideNearby();
       return;
@@ -314,21 +331,20 @@
 
     const heroRect = hero.getBoundingClientRect();
 
-    const heroCenterX = heroRect.left + heroRect.width / 2;
-    const heroCenterY = heroRect.top + heroRect.height / 2;
+    const hx = heroRect.left + heroRect.width / 2;
+    const hy = heroRect.top + heroRect.height / 2;
 
     let nearest = null;
     let nearestDistance = Infinity;
 
     buildings.forEach(function (building) {
-
       const rect = building.getBoundingClientRect();
 
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
+      const bx = rect.left + rect.width / 2;
+      const by = rect.top + rect.height / 2;
 
-      const dx = centerX - heroCenterX;
-      const dy = centerY - heroCenterY;
+      const dx = bx - hx;
+      const dy = by - hy;
 
       const distance = Math.sqrt(dx * dx + dy * dy);
 
@@ -336,7 +352,6 @@
         nearestDistance = distance;
         nearest = building;
       }
-
     });
 
     if (nearest && nearestDistance <= NEAR_DISTANCE) {
@@ -348,19 +363,16 @@
 
   /* ---------- Movement ---------- */
 
-  function move(dir) {
-
+  function move(direction) {
     if (!isWorldOpen()) return;
 
-    direction = dir;
+    if (direction === "up") y -= STEP;
+    if (direction === "down") y += STEP;
+    if (direction === "left") x -= STEP;
+    if (direction === "right") x += STEP;
 
-    if (dir === "up") y -= STEP;
-    if (dir === "down") y += STEP;
-    if (dir === "left") x -= STEP;
-    if (dir === "right") x += STEP;
-
-    x = Math.max(5, Math.min(95, x));
-    y = Math.max(5, Math.min(95, y));
+    x = Math.max(6, Math.min(94, x));
+    y = Math.max(7, Math.min(78, y));
 
     updateHero();
     checkNearby();
@@ -373,37 +385,37 @@
     }
   }
 
-  controls.querySelectorAll("button[data-dir]").forEach(function (button) {
+  controls.querySelectorAll("button[data-dir]").forEach(
+    function (button) {
+      const direction = button.dataset.dir;
 
-    const dir = button.dataset.dir;
+      button.addEventListener("pointerdown", function (event) {
+        event.preventDefault();
 
-    button.addEventListener("pointerdown", function (event) {
-      event.preventDefault();
+        stopMoving();
+        move(direction);
 
-      stopMoving();
-      move(dir);
+        moveTimer = window.setInterval(function () {
+          move(direction);
+        }, 140);
+      });
 
-      moveTimer = window.setInterval(function () {
-        move(dir);
-      }, 140);
-    });
-
-    button.addEventListener("pointerup", stopMoving);
-    button.addEventListener("pointercancel", stopMoving);
-    button.addEventListener("pointerleave", stopMoving);
-
-  });
+      button.addEventListener("pointerup", stopMoving);
+      button.addEventListener("pointercancel", stopMoving);
+      button.addEventListener("pointerleave", stopMoving);
+    }
+  );
 
   window.addEventListener("pointerup", stopMoving);
   window.addEventListener("blur", stopMoving);
 
-  /* ---------- Keyboard movement ---------- */
+  /* ---------- Keyboard ---------- */
 
   document.addEventListener("keydown", function (event) {
-
     if (!isWorldOpen()) return;
 
-    const tag = event.target && event.target.tagName;
+    const target = event.target;
+    const tag = target && target.tagName;
 
     if (tag === "INPUT" || tag === "TEXTAREA") return;
 
@@ -414,19 +426,17 @@
       ArrowRight: "right"
     };
 
-    const dir = keys[event.key];
+    const direction = keys[event.key];
 
-    if (dir) {
+    if (direction) {
       event.preventDefault();
-      move(dir);
+      move(direction);
     }
-
   });
 
-  /* ---------- Enter building ---------- */
+  /* ---------- Enter mission ---------- */
 
   function enterBuilding() {
-
     if (!currentBuilding) return;
 
     const index = Number(currentBuilding.dataset.zoneIndex);
@@ -436,12 +446,10 @@
     }
 
     if (index === 4 && getProgress() < 4) {
-      info.classList.remove("show");
+      world.querySelector(
+        "#andisha-city-nearby-name-v51"
+      ).textContent = "🔒 ابتدا چهار مأموریت دیگر را کامل کن";
 
-      const name = world.querySelector("#andisha-city-nearby-name-v51");
-      name.textContent = "🔒 ابتدا چهار مأموریت دیگر را کامل کن";
-
-      info.classList.add("show");
       return;
     }
 
@@ -457,10 +465,8 @@
       return;
     }
 
-    const building = buildings[index];
-
-    if (building) {
-      building.click();
+    if (buildings[index]) {
+      buildings[index].click();
     }
   }
 
@@ -472,43 +478,42 @@
   /* ---------- Refresh ---------- */
 
   function refresh() {
-
     if (!isWorldOpen()) {
       hideNearby();
       stopMoving();
       return;
     }
 
-    updateHero();
+    try {
+      const avatarIndex = Number(
+        localStorage.getItem("andishaFantasyAvatar")
+      );
 
-    const avatarIndex = Number(
-      localStorage.getItem("andishaFantasyAvatar")
-    );
-
-    const avatars = ["🧑‍🚀", "🧙‍♂️", "🦸", "🧝‍♀️", "👩‍🚀"];
-
-    if (
-      Number.isInteger(avatarIndex) &&
-      avatarIndex >= 0 &&
-      avatarIndex < avatars.length
-    ) {
-      hero.textContent = avatars[avatarIndex];
+      if (
+        Number.isInteger(avatarIndex) &&
+        avatarIndex >= 0 &&
+        avatarIndex < avatars.length
+      ) {
+        hero.textContent = avatars[avatarIndex];
+      }
+    } catch (error) {
+      // Keep the default avatar.
     }
 
+    updateHero();
     checkNearby();
   }
-
-  /* ---------- Events ---------- */
 
   window.addEventListener("storage", refresh);
   window.addEventListener("focus", refresh);
   window.addEventListener("pageshow", refresh);
 
-  world.addEventListener("click", function (event) {
-    if (event.target.closest("#fw40-avatar-change")) {
-      refresh();
+  world.querySelector("#fw40-avatar-change").addEventListener(
+    "click",
+    function () {
+      window.setTimeout(refresh, 0);
     }
-  });
+  );
 
   const observer = new MutationObserver(function () {
     if (isWorldOpen()) refresh();
@@ -525,13 +530,13 @@
 
   window.andishaCityLifeResetPosition = function () {
     x = 50;
-    y = 88;
+    y = 72;
     updateHero();
     checkNearby();
   };
 
   updateHero();
 
-  console.log("ANDISHA CITY LIFE V5.1 READY");
+  console.log("ANDISHA CITY LIFE V5.2 READY");
 
 })();
