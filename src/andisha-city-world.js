@@ -3,15 +3,16 @@
 
 /* ==================================================
    ANDISHA SMART CITY
-   FANTASY WORLD V3.0
+   FANTASY WORLD V3.1
    Independent visual expansion
    Preserves main game, scores and audio system
+   Live progress refresh + robust completion detection
    ================================================== */
 
 (function () {
 
-  if (window.__ANDISHA_FANTASY_WORLD_V30__) return;
-  window.__ANDISHA_FANTASY_WORLD_V30__ = true;
+  if (window.__ANDISHA_FANTASY_WORLD_V31__) return;
+  window.__ANDISHA_FANTASY_WORLD_V31__ = true;
 
   const zones = [
     {
@@ -76,7 +77,7 @@
     "andishaTowerCompleted"
   ];
 
-  const styleId = "andisha-fantasy-v30-style";
+  const styleId = "andisha-fantasy-v31-style";
   const worldId = "andisha-fantasy-world";
   const launcherId = "andisha-fantasy-launcher";
 
@@ -88,7 +89,8 @@
     "andisha-city-world-style",
     "andisha-fantasy-launcher",
     "andisha-fantasy-world",
-    "andisha-fantasy-v30-style"
+    "andisha-fantasy-v30-style",
+    "andisha-fantasy-v31-style"
   ].forEach(function (id) {
     const old = document.getElementById(id);
     if (old) old.remove();
@@ -105,7 +107,13 @@
   }
 
   function isCompleted(index) {
-    return readStorage(storageKeys[index]) === "true";
+    const value = readStorage(storageKeys[index]);
+
+    return (
+      value === "true" ||
+      value === "1" ||
+      value === "completed"
+    );
   }
 
   function getProgress() {
@@ -1026,13 +1034,26 @@
 
   });
 
-  /*
-    When the main game changes a completion flag,
-    refresh the world the next time it opens.
-  */
+  /* ---------- Progress refresh events ---------- */
 
+  // تغییر اطلاعات از تب یا پنجره دیگر
   window.addEventListener("storage", function () {
-    if (world.classList.contains("open")) {
+    refreshWorld();
+  });
+
+  // بازگشت دوباره به صفحه
+  window.addEventListener("focus", function () {
+    refreshWorld();
+  });
+
+  // بارگذاری مجدد یا بازگشت از صفحه دیگر
+  window.addEventListener("pageshow", function () {
+    refreshWorld();
+  });
+
+  // بازگشت به برنامه پس از رفتن به پس‌زمینه
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) {
       refreshWorld();
     }
   });
@@ -1049,6 +1070,6 @@
   window.andishaEnterCityZone = enterZone;
   window.andishaRefreshFantasyWorld = refreshWorld;
 
-  console.log("ANDISHA FANTASY WORLD V3.0 READY");
+  console.log("ANDISHA FANTASY WORLD V3.1 READY");
 
 })();
