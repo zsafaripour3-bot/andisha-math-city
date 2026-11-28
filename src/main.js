@@ -3,18 +3,51 @@
 
 // ============================================
 // 🏙️ ANDISHA SMART CITY
-// MAIN.JS - UNIFIED VERSION
+// MAIN.JS - STABLE UNIFIED VERSION
 // ============================================
 
 const app = document.getElementById("app");
 
 if (!app) {
-  document.body.innerHTML = "<h2>خطا: بخش اصلی بازی پیدا نشد.</h2>";
+  document.body.innerHTML =
+    "<h2>خطا: بخش اصلی بازی پیدا نشد.</h2>";
   throw new Error("Andisha app not found");
 }
 
 // ============================================
-// اطلاعات و ذخیره پیشرفت بازی
+// ذخیره‌سازی امن
+// ============================================
+
+function storageGet(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : value;
+  } catch (error) {
+    console.warn("Storage read error:", error);
+    return fallback;
+  }
+}
+
+function storageSet(key, value) {
+  try {
+    localStorage.setItem(key, String(value));
+    return true;
+  } catch (error) {
+    console.warn("Storage write error:", error);
+    return false;
+  }
+}
+
+function storageRemove(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.warn("Storage remove error:", error);
+  }
+}
+
+// ============================================
+// اطلاعات بازی
 // ============================================
 
 let score = 0;
@@ -30,6 +63,13 @@ let kitchenAttempts = 0;
 let bankAttempts = 0;
 let mapAttempts = 0;
 let towerStep = 0;
+
+// حالت تمرین مأموریت‌های تکمیل‌شده
+let shopPracticeMode = false;
+let kitchenPracticeMode = false;
+let bankPracticeMode = false;
+let mapPracticeMode = false;
+let towerPracticeMode = false;
 
 const STORAGE = {
   score: "andishaScore",
@@ -74,46 +114,47 @@ const zones = [
 ];
 
 // ============================================
-// ذخیره و بازیابی
+// ذخیره و بازیابی پیشرفت
 // ============================================
 
 function saveProgress() {
-  try {
-    localStorage.setItem(STORAGE.score, String(score));
-    localStorage.setItem(STORAGE.shop, String(shopCompleted));
-    localStorage.setItem(STORAGE.kitchen, String(kitchenCompleted));
-    localStorage.setItem(STORAGE.bank, String(bankCompleted));
-    localStorage.setItem(STORAGE.map, String(mapCompleted));
-    localStorage.setItem(STORAGE.tower, String(towerCompleted));
-  } catch (error) {
-    console.error("خطا در ذخیره پیشرفت:", error);
-  }
+  storageSet(STORAGE.score, score);
+  storageSet(STORAGE.shop, shopCompleted);
+  storageSet(STORAGE.kitchen, kitchenCompleted);
+  storageSet(STORAGE.bank, bankCompleted);
+  storageSet(STORAGE.map, mapCompleted);
+  storageSet(STORAGE.tower, towerCompleted);
 }
 
 function loadProgress() {
-  try {
-    score = Number(localStorage.getItem(STORAGE.score)) || 0;
+  score = Math.max(
+    0,
+    Number(storageGet(STORAGE.score, "0")) || 0
+  );
 
-    shopCompleted = localStorage.getItem(STORAGE.shop) === "true";
-    kitchenCompleted = localStorage.getItem(STORAGE.kitchen) === "true";
-    bankCompleted = localStorage.getItem(STORAGE.bank) === "true";
-    mapCompleted = localStorage.getItem(STORAGE.map) === "true";
-    towerCompleted = localStorage.getItem(STORAGE.tower) === "true";
-  } catch (error) {
-    console.error("خطا در خواندن پیشرفت:", error);
-  }
+  shopCompleted =
+    storageGet(STORAGE.shop, "false") === "true";
+
+  kitchenCompleted =
+    storageGet(STORAGE.kitchen, "false") === "true";
+
+  bankCompleted =
+    storageGet(STORAGE.bank, "false") === "true";
+
+  mapCompleted =
+    storageGet(STORAGE.map, "false") === "true";
+
+  towerCompleted =
+    storageGet(STORAGE.tower, "false") === "true";
 }
 
 function resetProgress() {
-  try {
-    Object.keys(STORAGE).forEach(function(key) {
-      localStorage.removeItem(STORAGE[key]);
-    });
-  } catch (error) {
-    console.error("خطا در پاک‌سازی پیشرفت:", error);
-  }
+  Object.keys(STORAGE).forEach(function(key) {
+    storageRemove(STORAGE[key]);
+  });
 
   score = 0;
+
   shopCompleted = false;
   kitchenCompleted = false;
   bankCompleted = false;
@@ -125,6 +166,12 @@ function resetProgress() {
   bankAttempts = 0;
   mapAttempts = 0;
   towerStep = 0;
+
+  shopPracticeMode = false;
+  kitchenPracticeMode = false;
+  bankPracticeMode = false;
+  mapPracticeMode = false;
+  towerPracticeMode = false;
 }
 
 function completedCount() {
@@ -137,6 +184,10 @@ function completedCount() {
   ].filter(Boolean).length;
 }
 
+// ============================================
+// صفحه پایان عمومی
+// ============================================
+
 function showCompletedPage(title, message) {
   loadProgress();
 
@@ -146,7 +197,9 @@ function showCompletedPage(title, message) {
       <h2>🎉 ${message}</h2>
       <h3>⭐ مجموع امتیاز: ${score}</h3>
       <p>تعداد مناطق تکمیل‌شده: ${completedCount()} از ۵</p>
-      <button data-action="city">بازگشت به شهرک 🏙️</button>
+      <button data-action="city">
+        بازگشت به شهرک 🏙️
+      </button>
     </main>
   `;
 }
@@ -161,7 +214,9 @@ function showWelcome() {
       <h1>🏙️ شهرک هوشمند اندیشا</h1>
       <h2>مأموریت بزرگ تناسب و درصد</h2>
       <p>سلام قهرمان! آماده‌ای شهرک را بسازی؟</p>
-      <button data-action="story">شروع ماجراجویی 🚀</button>
+      <button data-action="story">
+        شروع ماجراجویی 🚀
+      </button>
     </main>
   `;
 }
@@ -174,7 +229,9 @@ function showStory() {
       <p>آوا: سلام قهرمان! من مهندس کوچک شهرک هستم.</p>
       <p>اندی: شهرک به کمک ریاضی تو نیاز دارد!</p>
       <p>با حل معماها، پنج منطقه را آباد می‌کنیم.</p>
-      <button data-action="city">ورود به شهرک 🏙️</button>
+      <button data-action="city">
+        ورود به شهرک 🏙️
+      </button>
     </main>
   `;
 }
@@ -186,8 +243,17 @@ function showStory() {
 function showCity() {
   loadProgress();
 
+  const completedList = [
+    shopCompleted,
+    kitchenCompleted,
+    bankCompleted,
+    mapCompleted,
+    towerCompleted
+  ];
+
   app.innerHTML = `
     <main dir="rtl">
+
       <h1>🏙️ شهرک هوشمند اندیشا</h1>
       <h2>نقشه مأموریت قهرمان</h2>
 
@@ -195,44 +261,55 @@ function showCity() {
       <p>🏅 مناطق تکمیل‌شده: ${completedCount()} از ۵</p>
 
       <section class="city-map">
+
         ${zones.map(function(zone, i) {
-          const completed = [
-            shopCompleted,
-            kitchenCompleted,
-            bankCompleted,
-            mapCompleted,
-            towerCompleted
-          ][i];
+          const completed = completedList[i];
 
           return `
             <article class="building"
               style="border-top:7px solid ${zone.color}">
 
               <div class="building-icon">${zone.icon}</div>
+
               <h2>${zone.name}</h2>
               <p>${zone.mission}</p>
 
               <p>
-                ${completed ? "🏅 تکمیل شده" : "🔐 مأموریت باز است"}
+                ${completed
+                  ? "🏅 تکمیل شده"
+                  : "🔐 مأموریت باز است"}
               </p>
 
-              <button data-action="zone" data-zone="${i}">
-                ${completed ? "مشاهده منطقه" : "ورود به منطقه 🚀"}
+              <button
+                data-action="zone"
+                data-zone="${i}">
+                ${completed
+                  ? "مشاهده منطقه"
+                  : "ورود به منطقه 🚀"}
               </button>
 
             </article>
           `;
         }).join("")}
+
       </section>
 
       <button data-action="story">
         مشاهده داستان ماجراجویی
       </button>
 
-      <button data-action="reset-progress"
-        style="background:linear-gradient(135deg,#ffb3b3,#e8615e);color:#fff;margin-top:12px;font-size:14px;padding:10px 18px">
+      <button
+        data-action="reset-progress"
+        style="
+          background:linear-gradient(135deg,#ffb3b3,#e8615e);
+          color:#fff;
+          margin-top:12px;
+          font-size:14px;
+          padding:10px 18px;
+        ">
         🔄 شروع دوباره (پاک‌کردن پیشرفت)
       </button>
+
     </main>
   `;
 }
@@ -241,45 +318,78 @@ function showCity() {
 // مأموریت اول: فروشگاه
 // ============================================
 
-function showShop() {
+function showShop(practice) {
   loadProgress();
+
+  shopPracticeMode = practice === true;
   shopAttempts = 0;
 
   const isCompleted = shopCompleted;
+  const locked = isCompleted && !shopPracticeMode;
 
   app.innerHTML = `
     <main dir="rtl">
+
       <h1>🛍️ فروشگاه هوشمند اندیشا</h1>
       <h2>مأموریت اول: شکار تخفیف!</h2>
 
-      <p>قیمت اولیه کیف: <strong>۲۰۰٬۰۰۰ تومان</strong></p>
-      <p>تخفیف فروشگاه: <strong>۲۵ درصد</strong></p>
+      <p>قیمت اولیه کیف:
+        <strong>۲۰۰٬۰۰۰ تومان</strong>
+      </p>
+
+      <p>تخفیف فروشگاه:
+        <strong>۲۵ درصد</strong>
+      </p>
 
       <h3>قیمت نهایی کیف چقدر است؟</h3>
 
       <div class="shop-options">
-        <button data-action="shop-answer" data-answer="150000" ${isCompleted ? "disabled" : ""}>
+
+        <button data-action="shop-answer"
+          data-answer="150000"
+          ${locked ? "disabled" : ""}>
           ۱۵۰٬۰۰۰ تومان ${isCompleted ? "✅" : ""}
         </button>
 
-        <button data-action="shop-answer" data-answer="175000" ${isCompleted ? "disabled" : ""}>
+        <button data-action="shop-answer"
+          data-answer="175000"
+          ${locked ? "disabled" : ""}>
           ۱۷۵٬۰۰۰ تومان
         </button>
 
-        <button data-action="shop-answer" data-answer="125000" ${isCompleted ? "disabled" : ""}>
+        <button data-action="shop-answer"
+          data-answer="125000"
+          ${locked ? "disabled" : ""}>
           ۱۲۵٬۰۰۰ تومان
         </button>
+
       </div>
 
       <p id="feedback">
-        ${isCompleted
-          ? "🏅 این مأموریت قبلاً تکمیل شده است. پاسخ درست با ✅ مشخص شده."
-          : "یکی از پاسخ‌ها را انتخاب کن."}
+        ${locked
+          ? "🏅 این مأموریت قبلاً تکمیل شده است."
+          : shopPracticeMode
+            ? "🔄 حالت تمرین؛ امتیاز جدید دریافت نمی‌کنی."
+            : "یکی از پاسخ‌ها را انتخاب کن."}
       </p>
+
       <p id="score">⭐ امتیاز: ${score}</p>
 
-      ${isCompleted ? `<button data-action="replay" data-zone-name="shop" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت</button>` : ""}
-      <button data-action="city">بازگشت به شهرک 🏙️</button>
+      ${isCompleted && !shopPracticeMode ? `
+        <button data-action="replay"
+          data-zone-name="shop"
+          style="
+            background:linear-gradient(135deg,#a1c4fd,#c2e9fb);
+            color:#142b52;
+            margin-top:10px">
+          🔄 تکرار مأموریت
+        </button>
+      ` : ""}
+
+      <button data-action="city">
+        بازگشت به شهرک 🏙️
+      </button>
+
     </main>
   `;
 }
@@ -287,7 +397,9 @@ function showShop() {
 function checkShopAnswer(answer) {
   loadProgress();
 
-  if (shopCompleted) return showShop();
+  if (shopCompleted && !shopPracticeMode) {
+    return showShop(false);
+  }
 
   const feedback = document.getElementById("feedback");
   const scoreElement = document.getElementById("score");
@@ -295,17 +407,26 @@ function checkShopAnswer(answer) {
   if (!feedback || !scoreElement) return;
 
   if (answer === 150000) {
-    shopCompleted = true;
-    score += 10;
-    saveProgress();
+
+    if (!shopCompleted) {
+      shopCompleted = true;
+      score += 10;
+      saveProgress();
+    }
 
     scoreElement.textContent = `⭐ امتیاز: ${score}`;
 
     feedback.innerHTML = `
       🎉 آفرین قهرمان!
+
       <p>۲۵ درصدِ ۲۰۰٬۰۰۰ می‌شود ۵۰٬۰۰۰ تومان.</p>
       <p>۲۰۰٬۰۰۰ − ۵۰٬۰۰۰ = ۱۵۰٬۰۰۰ تومان</p>
-      <h3>🏅 ۱۰ امتیاز گرفتی!</h3>
+
+      <h3>
+        ${shopPracticeMode
+          ? "🌱 تمرین با موفقیت انجام شد؛ امتیاز جدید ندارد."
+          : "🏅 ۱۰ امتیاز گرفتی!"}
+      </h3>
     `;
 
     app.querySelectorAll('[data-action="shop-answer"]')
@@ -314,11 +435,13 @@ function checkShopAnswer(answer) {
       });
 
   } else {
+
     shopAttempts++;
 
     feedback.innerHTML = shopAttempts === 1
       ? "🌱 یک بار دیگر فکر کن!<p>۲۵ درصد یعنی یک‌چهارم قیمت کالا.</p>"
       : "🤖 اندی: ۲۰۰٬۰۰۰ ÷ ۴ = ۵۰٬۰۰۰ تومان تخفیف؛ آن را از قیمت کم کن.";
+
   }
 }
 
@@ -326,35 +449,72 @@ function checkShopAnswer(answer) {
 // مأموریت دوم: آشپزخانه
 // ============================================
 
-function showKitchen() {
+function showKitchen(practice) {
   loadProgress();
+
+  kitchenPracticeMode = practice === true;
   kitchenAttempts = 0;
 
   const isCompleted = kitchenCompleted;
+  const locked = isCompleted && !kitchenPracticeMode;
 
   app.innerHTML = `
     <main dir="rtl">
+
       <h1>🍰 آشپزخانه مرکزی اندیشا</h1>
       <h2>مأموریت دوم: دستور پخت قهرمانانه!</h2>
 
       <p>برای ۴ نفر به ۲ پیمانه آرد نیاز داریم.</p>
+
       <h3>برای ۸ نفر چند پیمانه آرد لازم داریم؟</h3>
 
       <div class="shop-options">
-        <button data-action="kitchen-answer" data-answer="3" ${isCompleted ? "disabled" : ""}>۳ پیمانه</button>
-        <button data-action="kitchen-answer" data-answer="4" ${isCompleted ? "disabled" : ""}>۴ پیمانه ${isCompleted ? "✅" : ""}</button>
-        <button data-action="kitchen-answer" data-answer="6" ${isCompleted ? "disabled" : ""}>۶ پیمانه</button>
+
+        <button data-action="kitchen-answer"
+          data-answer="3"
+          ${locked ? "disabled" : ""}>
+          ۳ پیمانه
+        </button>
+
+        <button data-action="kitchen-answer"
+          data-answer="4"
+          ${locked ? "disabled" : ""}>
+          ۴ پیمانه ${isCompleted ? "✅" : ""}
+        </button>
+
+        <button data-action="kitchen-answer"
+          data-answer="6"
+          ${locked ? "disabled" : ""}>
+          ۶ پیمانه
+        </button>
+
       </div>
 
       <p id="kitchen-feedback">
-        ${isCompleted
-          ? "🏅 این مأموریت قبلاً تکمیل شده است. پاسخ درست با ✅ مشخص شده."
-          : "پاسخ درست را انتخاب کن قهرمان!"}
+        ${locked
+          ? "🏅 این مأموریت قبلاً تکمیل شده است."
+          : kitchenPracticeMode
+            ? "🔄 حالت تمرین؛ امتیاز جدید دریافت نمی‌کنی."
+            : "پاسخ درست را انتخاب کن قهرمان!"}
       </p>
+
       <p id="kitchen-score">⭐ امتیاز: ${score}</p>
 
-      ${isCompleted ? `<button data-action="replay" data-zone-name="kitchen" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت</button>` : ""}
-      <button data-action="city">بازگشت به شهرک 🏙️</button>
+      ${isCompleted && !kitchenPracticeMode ? `
+        <button data-action="replay"
+          data-zone-name="kitchen"
+          style="
+            background:linear-gradient(135deg,#a1c4fd,#c2e9fb);
+            color:#142b52;
+            margin-top:10px">
+          🔄 تکرار مأموریت
+        </button>
+      ` : ""}
+
+      <button data-action="city">
+        بازگشت به شهرک 🏙️
+      </button>
+
     </main>
   `;
 }
@@ -362,7 +522,9 @@ function showKitchen() {
 function checkKitchenAnswer(answer) {
   loadProgress();
 
-  if (kitchenCompleted) return showKitchen();
+  if (kitchenCompleted && !kitchenPracticeMode) {
+    return showKitchen(false);
+  }
 
   const feedback = document.getElementById("kitchen-feedback");
   const scoreElement = document.getElementById("kitchen-score");
@@ -370,17 +532,26 @@ function checkKitchenAnswer(answer) {
   if (!feedback || !scoreElement) return;
 
   if (answer === 4) {
-    kitchenCompleted = true;
-    score += 10;
-    saveProgress();
+
+    if (!kitchenCompleted) {
+      kitchenCompleted = true;
+      score += 10;
+      saveProgress();
+    }
 
     scoreElement.textContent = `⭐ امتیاز: ${score}`;
 
     feedback.innerHTML = `
       🎉 آفرین قهرمان!
+
       <p>تعداد مهمان‌ها دو برابر شده است.</p>
       <p>۲ × ۲ = ۴ پیمانه آرد</p>
-      <h3>🏅 ۱۰ امتیاز گرفتی!</h3>
+
+      <h3>
+        ${kitchenPracticeMode
+          ? "🌱 تمرین با موفقیت انجام شد؛ امتیاز جدید ندارد."
+          : "🏅 ۱۰ امتیاز گرفتی!"}
+      </h3>
     `;
 
     app.querySelectorAll('[data-action="kitchen-answer"]')
@@ -389,11 +560,13 @@ function checkKitchenAnswer(answer) {
       });
 
   } else {
+
     kitchenAttempts++;
 
     feedback.innerHTML = kitchenAttempts === 1
       ? "🌱 دوباره فکر کن! تعداد مهمان‌ها دو برابر شده است."
       : "🤖 اندی: برای ۸ نفر، ۲ × ۲ = ۴ پیمانه آرد لازم داریم.";
+
   }
 }
 
@@ -401,45 +574,78 @@ function checkKitchenAnswer(answer) {
 // مأموریت سوم: بانک
 // ============================================
 
-function showBank() {
+function showBank(practice) {
   loadProgress();
+
+  bankPracticeMode = practice === true;
   bankAttempts = 0;
 
   const isCompleted = bankCompleted;
+  const locked = isCompleted && !bankPracticeMode;
 
   app.innerHTML = `
     <main dir="rtl">
+
       <h1>🏦 بانک اندیشا</h1>
       <h2>مأموریت سوم: راز درصد!</h2>
 
-      <p>مبلغ سپرده فرضی: <strong>۵۰۰٬۰۰۰ تومان</strong></p>
-      <p>درصد پاداش: <strong>۱۰ درصد</strong></p>
+      <p>مبلغ سپرده فرضی:
+        <strong>۵۰۰٬۰۰۰ تومان</strong>
+      </p>
+
+      <p>درصد پاداش:
+        <strong>۱۰ درصد</strong>
+      </p>
 
       <h3>مقدار پاداش چند تومان می‌شود؟</h3>
 
       <div class="shop-options">
-        <button data-action="bank-answer" data-answer="50000" ${isCompleted ? "disabled" : ""}>
+
+        <button data-action="bank-answer"
+          data-answer="50000"
+          ${locked ? "disabled" : ""}>
           ۵۰٬۰۰۰ تومان ${isCompleted ? "✅" : ""}
         </button>
 
-        <button data-action="bank-answer" data-answer="100000" ${isCompleted ? "disabled" : ""}>
+        <button data-action="bank-answer"
+          data-answer="100000"
+          ${locked ? "disabled" : ""}>
           ۱۰۰٬۰۰۰ تومان
         </button>
 
-        <button data-action="bank-answer" data-answer="25000" ${isCompleted ? "disabled" : ""}>
+        <button data-action="bank-answer"
+          data-answer="25000"
+          ${locked ? "disabled" : ""}>
           ۲۵٬۰۰۰ تومان
         </button>
+
       </div>
 
       <p id="bank-feedback">
-        ${isCompleted
-          ? "🏅 این مأموریت قبلاً تکمیل شده است. پاسخ درست با ✅ مشخص شده."
-          : "با دقت فکر کن و پاسخ را انتخاب کن."}
+        ${locked
+          ? "🏅 این مأموریت قبلاً تکمیل شده است."
+          : bankPracticeMode
+            ? "🔄 حالت تمرین؛ امتیاز جدید دریافت نمی‌کنی."
+            : "با دقت فکر کن و پاسخ را انتخاب کن."}
       </p>
+
       <p id="bank-score">⭐ امتیاز: ${score}</p>
 
-      ${isCompleted ? `<button data-action="replay" data-zone-name="bank" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت</button>` : ""}
-      <button data-action="city">بازگشت به شهرک 🏙️</button>
+      ${isCompleted && !bankPracticeMode ? `
+        <button data-action="replay"
+          data-zone-name="bank"
+          style="
+            background:linear-gradient(135deg,#a1c4fd,#c2e9fb);
+            color:#142b52;
+            margin-top:10px">
+          🔄 تکرار مأموریت
+        </button>
+      ` : ""}
+
+      <button data-action="city">
+        بازگشت به شهرک 🏙️
+      </button>
+
     </main>
   `;
 }
@@ -447,7 +653,9 @@ function showBank() {
 function checkBankAnswer(answer) {
   loadProgress();
 
-  if (bankCompleted) return showBank();
+  if (bankCompleted && !bankPracticeMode) {
+    return showBank(false);
+  }
 
   const feedback = document.getElementById("bank-feedback");
   const scoreElement = document.getElementById("bank-score");
@@ -455,17 +663,26 @@ function checkBankAnswer(answer) {
   if (!feedback || !scoreElement) return;
 
   if (answer === 50000) {
-    bankCompleted = true;
-    score += 10;
-    saveProgress();
+
+    if (!bankCompleted) {
+      bankCompleted = true;
+      score += 10;
+      saveProgress();
+    }
 
     scoreElement.textContent = `⭐ امتیاز: ${score}`;
 
     feedback.innerHTML = `
       🎉 آفرین قهرمان!
+
       <p>۱۰ درصد یعنی یک‌دهم.</p>
       <p>۵۰۰٬۰۰۰ ÷ ۱۰ = ۵۰٬۰۰۰ تومان</p>
-      <h3>🏅 ۱۰ امتیاز گرفتی!</h3>
+
+      <h3>
+        ${bankPracticeMode
+          ? "🌱 تمرین با موفقیت انجام شد؛ امتیاز جدید ندارد."
+          : "🏅 ۱۰ امتیاز گرفتی!"}
+      </h3>
     `;
 
     app.querySelectorAll('[data-action="bank-answer"]')
@@ -474,11 +691,13 @@ function checkBankAnswer(answer) {
       });
 
   } else {
+
     bankAttempts++;
 
     feedback.innerHTML = bankAttempts === 1
       ? "🌱 راهنمایی اندی: ۱۰ درصد یعنی یک‌دهم مبلغ."
       : "🤖 اندی: ۵۰۰٬۰۰۰ را بر ۱۰ تقسیم می‌کنیم؛ جواب ۵۰٬۰۰۰ است.";
+
   }
 }
 
@@ -486,37 +705,76 @@ function checkBankAnswer(answer) {
 // مأموریت چهارم: نقشه‌سازی
 // ============================================
 
-function showMapWorkshop() {
+function showMapWorkshop(practice) {
   loadProgress();
+
+  mapPracticeMode = practice === true;
   mapAttempts = 0;
 
   const isCompleted = mapCompleted;
+  const locked = isCompleted && !mapPracticeMode;
 
   app.innerHTML = `
     <main dir="rtl">
+
       <h1>📐 کارگاه نقشه‌سازی اندیشا</h1>
       <h2>مأموریت چهارم: طراح شهرک باش!</h2>
 
       <p>هر ۱ سانتی‌متر روی نقشه برابر با ۲ متر در واقعیت است.</p>
-      <p>📏 فاصله مدرسه تا پارک روی نقشه: <strong>۷ سانتی‌متر</strong></p>
+
+      <p>📏 فاصله مدرسه تا پارک روی نقشه:
+        <strong>۷ سانتی‌متر</strong>
+      </p>
 
       <h3>فاصله واقعی مدرسه تا پارک چند متر است؟</h3>
 
       <div class="shop-options">
-        <button data-action="map-answer" data-answer="12" ${isCompleted ? "disabled" : ""}>۱۲ متر</button>
-        <button data-action="map-answer" data-answer="14" ${isCompleted ? "disabled" : ""}>۱۴ متر ${isCompleted ? "✅" : ""}</button>
-        <button data-action="map-answer" data-answer="16" ${isCompleted ? "disabled" : ""}>۱۶ متر</button>
+
+        <button data-action="map-answer"
+          data-answer="12"
+          ${locked ? "disabled" : ""}>
+          ۱۲ متر
+        </button>
+
+        <button data-action="map-answer"
+          data-answer="14"
+          ${locked ? "disabled" : ""}>
+          ۱۴ متر ${isCompleted ? "✅" : ""}
+        </button>
+
+        <button data-action="map-answer"
+          data-answer="16"
+          ${locked ? "disabled" : ""}>
+          ۱۶ متر
+        </button>
+
       </div>
 
       <p id="map-feedback">
-        ${isCompleted
-          ? "🏅 این مأموریت قبلاً تکمیل شده است. پاسخ درست با ✅ مشخص شده."
-          : "پاسخ را انتخاب کن، مهندس کوچک!"}
+        ${locked
+          ? "🏅 این مأموریت قبلاً تکمیل شده است."
+          : mapPracticeMode
+            ? "🔄 حالت تمرین؛ امتیاز جدید دریافت نمی‌کنی."
+            : "پاسخ را انتخاب کن، مهندس کوچک!"}
       </p>
+
       <p id="map-score">⭐ امتیاز: ${score}</p>
 
-      ${isCompleted ? `<button data-action="replay" data-zone-name="map" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">🔄 تکرار مأموریت</button>` : ""}
-      <button data-action="city">بازگشت به شهرک 🏙️</button>
+      ${isCompleted && !mapPracticeMode ? `
+        <button data-action="replay"
+          data-zone-name="map"
+          style="
+            background:linear-gradient(135deg,#a1c4fd,#c2e9fb);
+            color:#142b52;
+            margin-top:10px">
+          🔄 تکرار مأموریت
+        </button>
+      ` : ""}
+
+      <button data-action="city">
+        بازگشت به شهرک 🏙️
+      </button>
+
     </main>
   `;
 }
@@ -524,7 +782,9 @@ function showMapWorkshop() {
 function checkMapAnswer(answer) {
   loadProgress();
 
-  if (mapCompleted) return showMapWorkshop();
+  if (mapCompleted && !mapPracticeMode) {
+    return showMapWorkshop(false);
+  }
 
   const feedback = document.getElementById("map-feedback");
   const scoreElement = document.getElementById("map-score");
@@ -532,16 +792,25 @@ function checkMapAnswer(answer) {
   if (!feedback || !scoreElement) return;
 
   if (answer === 14) {
-    mapCompleted = true;
-    score += 10;
-    saveProgress();
+
+    if (!mapCompleted) {
+      mapCompleted = true;
+      score += 10;
+      saveProgress();
+    }
 
     scoreElement.textContent = `⭐ امتیاز: ${score}`;
 
     feedback.innerHTML = `
       🎉 آفرین مهندس شهرک!
+
       <p>۷ × ۲ = ۱۴ متر</p>
-      <h3>🏅 ۱۰ امتیاز گرفتی!</h3>
+
+      <h3>
+        ${mapPracticeMode
+          ? "🌱 تمرین با موفقیت انجام شد؛ امتیاز جدید ندارد."
+          : "🏅 ۱۰ امتیاز گرفتی!"}
+      </h3>
     `;
 
     app.querySelectorAll('[data-action="map-answer"]')
@@ -550,16 +819,18 @@ function checkMapAnswer(answer) {
       });
 
   } else {
+
     mapAttempts++;
 
     feedback.innerHTML = mapAttempts === 1
       ? "🌱 هر سانتی‌متر برابر ۲ متر است. پس ۷ را در ۲ ضرب کن."
       : "🤖 اندی: ۷ × ۲ = ۱۴ متر.";
+
   }
 }
 
 // ============================================
-// مأموریت پنجم: برج هوشمند
+// مأموریت پنجم: پرسش‌های برج
 // ============================================
 
 const towerQuestions = [
@@ -609,7 +880,10 @@ const towerQuestions = [
   }
 ];
 
-// اتصال امن پاسخ برج به سیستم‌های جانبی
+// ============================================
+// API عمومی بازی برای افزونه‌ها
+// ============================================
+
 window.andishaGetExpectedAnswer = function(action) {
   const fixed = {
     "shop-answer": 150000,
@@ -629,7 +903,6 @@ window.andishaGetExpectedAnswer = function(action) {
     : null;
 };
 
-// برای سازگاری با افزونه‌هایی که این نام‌ها را می‌خوانند
 window.towerQuestions = towerQuestions;
 
 Object.defineProperty(window, "towerStep", {
@@ -639,38 +912,105 @@ Object.defineProperty(window, "towerStep", {
   }
 });
 
+Object.defineProperty(window, "towerCompleted", {
+  configurable: true,
+  get: function() {
+    return towerCompleted;
+  }
+});
+
+window.andishaIsTowerCompleted = function() {
+  return towerCompleted;
+};
+
+// ورود مستقیم افزونه به پنج ساختمان
+window.andishaOpenZone = function(index) {
+  index = Number(index);
+
+  if (!Number.isInteger(index) || index < 0 || index > 4) {
+    return false;
+  }
+
+  switch (index) {
+    case 0:
+      showShop(false);
+      break;
+    case 1:
+      showKitchen(false);
+      break;
+    case 2:
+      showBank(false);
+      break;
+    case 3:
+      showMapWorkshop(false);
+      break;
+    case 4:
+      showTower(false);
+      break;
+    default:
+      return false;
+  }
+
+  return true;
+};
+
+console.log("ANDISHA PUBLIC GAME API READY");
+
 // ============================================
-// نمایش برج
+// نمایش برج هوشمند
 // ============================================
 
-function showTower() {
+function showTower(practice) {
   loadProgress();
 
-  if (towerCompleted) {
+  towerPracticeMode = practice === true;
+
+  if (towerCompleted && !towerPracticeMode) {
     app.innerHTML = `
       <main dir="rtl">
+
         <h1>🏆 برج هوشمند اندیشا</h1>
         <h2>🎉🎉 چهار قفل باز شد!</h2>
-        <h2>🥇 تو قهرمان شهرک اندیشا هستی!</h2>
+        <h2>🥇 چالش برج را با موفقیت به پایان رساندی!</h2>
 
-        <p>⭐ امتیاز نهایی: ${score}</p>
+        <p>⭐ امتیاز تو: ${score}</p>
 
-        <p>🛍️ فروشگاه: ${shopCompleted ? "تکمیل" : "هنوز تکمیل نشده"}</p>
-        <p>🍰 آشپزخانه: ${kitchenCompleted ? "تکمیل" : "هنوز تکمیل نشده"}</p>
-        <p>🏦 بانک: ${bankCompleted ? "تکمیل" : "هنوز تکمیل نشده"}</p>
-        <p>📐 نقشه‌سازی: ${mapCompleted ? "تکمیل" : "هنوز تکمیل نشده"}</p>
+        <p>🛍️ فروشگاه:
+          ${shopCompleted ? "تکمیل" : "هنوز تکمیل نشده"}
+        </p>
+
+        <p>🍰 آشپزخانه:
+          ${kitchenCompleted ? "تکمیل" : "هنوز تکمیل نشده"}
+        </p>
+
+        <p>🏦 بانک:
+          ${bankCompleted ? "تکمیل" : "هنوز تکمیل نشده"}
+        </p>
+
+        <p>📐 نقشه‌سازی:
+          ${mapCompleted ? "تکمیل" : "هنوز تکمیل نشده"}
+        </p>
+
         <p>🏆 برج هوشمند: تکمیل</p>
 
         <h3>🌟 نشان طلایی قهرمانی مبارک!</h3>
 
-        <button data-action="replay" data-zone-name="tower"
-          style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">
+        <button data-action="replay"
+          data-zone-name="tower"
+          style="
+            background:linear-gradient(135deg,#a1c4fd,#c2e9fb);
+            color:#142b52;
+            margin-top:10px">
           🔄 تکرار مأموریت برج
         </button>
 
-        <button data-action="city">بازگشت به شهرک 🏙️</button>
+        <button data-action="city">
+          بازگشت به شهرک 🏙️
+        </button>
+
       </main>
     `;
+
     return;
   }
 
@@ -688,14 +1028,17 @@ function showTowerQuestion() {
 
   app.innerHTML = `
     <main dir="rtl">
+
       <h1>🏆 برج هوشمند اندیشا</h1>
       <h2>مأموریت نهایی: چهار قفل قهرمانی</h2>
 
       <h3>${q.title}</h3>
+
       <p>🔐 قفل ${towerStep + 1} از ۴</p>
       <p>${q.question}</p>
 
       <div class="shop-options">
+
         ${q.options.map(function(option) {
           return `
             <button
@@ -705,12 +1048,65 @@ function showTowerQuestion() {
             </button>
           `;
         }).join("")}
+
       </div>
 
-      <p id="tower-feedback">🤖 اندی: هر چهار قفل را باز کن!</p>
+      <p id="tower-feedback">
+        🤖 اندی: هر چهار قفل را باز کن!
+      </p>
+
       <p>⭐ امتیاز فعلی: ${score}</p>
 
-      <button data-action="city">بازگشت به شهرک 🏙️</button>
+      <button data-action="city">
+        بازگشت به شهرک 🏙️
+      </button>
+
+    </main>
+  `;
+}
+
+function showTowerVictory() {
+  loadProgress();
+
+  app.innerHTML = `
+    <main dir="rtl">
+
+      <h1>🏆 برج هوشمند اندیشا</h1>
+      <h2>🎉🎉 چهار قفل باز شد!</h2>
+      <h2>🥇 تو قهرمان برج اندیشا هستی!</h2>
+
+      <p>⭐ امتیاز تو: ${score}</p>
+
+      <p>🛍️ فروشگاه:
+        ${shopCompleted ? "تکمیل" : "هنوز تکمیل نشده"}
+      </p>
+
+      <p>🍰 آشپزخانه:
+        ${kitchenCompleted ? "تکمیل" : "هنوز تکمیل نشده"}
+      </p>
+
+      <p>🏦 بانک:
+        ${bankCompleted ? "تکمیل" : "هنوز تکمیل نشده"}
+      </p>
+
+      <p>📐 نقشه‌سازی:
+        ${mapCompleted ? "تکمیل" : "هنوز تکمیل نشده"}
+      </p>
+
+      <p>🏆 برج هوشمند: تکمیل</p>
+
+      <h3>🌟 نشان طلایی قهرمانی مبارک!</h3>
+
+      ${towerPracticeMode ? `
+        <p>🌱 تمرین برج با موفقیت انجام شد؛ امتیاز جدید ندارد.</p>
+      ` : `
+        <p>🏅 ۱۰ امتیاز برای تکمیل برج دریافت کردی!</p>
+      `}
+
+      <button data-action="city">
+        بازگشت به شهرک 🏙️
+      </button>
+
     </main>
   `;
 }
@@ -718,8 +1114,8 @@ function showTowerQuestion() {
 function checkTowerAnswer(answer) {
   loadProgress();
 
-  if (towerCompleted) {
-    showTower();
+  if (towerCompleted && !towerPracticeMode) {
+    showTower(false);
     return;
   }
 
@@ -729,48 +1125,31 @@ function checkTowerAnswer(answer) {
   if (!q || !feedback) return;
 
   if (answer === q.answer) {
+
     towerStep++;
 
     if (towerStep === towerQuestions.length) {
-      towerCompleted = true;
-      score += 10;
-      saveProgress();
 
-      app.innerHTML = `
-        <main dir="rtl">
-          <h1>🏆 برج هوشمند اندیشا</h1>
-          <h2>🎉🎉 چهار قفل باز شد!</h2>
-          <h2>🥇 تو قهرمان شهرک اندیشا هستی!</h2>
+      if (!towerCompleted) {
+        towerCompleted = true;
+        score += 10;
+        saveProgress();
+      }
 
-          <p>⭐ امتیاز نهایی: ${score}</p>
-
-          <p>🛍️ فروشگاه: ${shopCompleted ? "تکمیل" : "هنوز تکمیل نشده"}</p>
-          <p>🍰 آشپزخانه: ${kitchenCompleted ? "تکمیل" : "هنوز تکمیل نشده"}</p>
-          <p>🏦 بانک: ${bankCompleted ? "تکمیل" : "هنوز تکمیل نشده"}</p>
-          <p>📐 نقشه‌سازی: ${mapCompleted ? "تکمیل" : "هنوز تکمیل نشده"}</p>
-          <p>🏆 برج هوشمند: تکمیل</p>
-
-          <h3>🌟 نشان طلایی قهرمانی مبارک!</h3>
-
-          <button data-action="replay" data-zone-name="tower"
-            style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);color:#142b52;margin-top:10px">
-            🔄 تکرار مأموریت برج
-          </button>
-
-          <button data-action="city">بازگشت به شهرک 🏙️</button>
-        </main>
-      `;
+      showTowerVictory();
 
     } else {
       showTowerQuestion();
     }
 
   } else {
+
     feedback.innerHTML = `
       🌱 هنوز این قفل باز نشده!
       <p>${q.hint}</p>
       <p>دوباره تلاش کن قهرمان!</p>
     `;
+
   }
 }
 
@@ -781,17 +1160,22 @@ function checkTowerAnswer(answer) {
 app.addEventListener("click", function(event) {
   const target = event.target;
 
-  if (!target || typeof target.closest !== "function") return;
+  if (!target || typeof target.closest !== "function") {
+    return;
+  }
 
   const button = target.closest("button[data-action]");
 
-  if (!button || !app.contains(button) || button.disabled) return;
+  if (!button || !app.contains(button) || button.disabled) {
+    return;
+  }
 
   const action = button.dataset.action;
 
   event.preventDefault();
 
   switch (action) {
+
     case "story":
       showStory();
       break;
@@ -817,30 +1201,19 @@ app.addEventListener("click", function(event) {
       const zoneName = button.dataset.zoneName;
 
       if (zoneName === "shop") {
-        shopCompleted = false;
-        saveProgress();
-        showShop();
+        showShop(true);
 
       } else if (zoneName === "kitchen") {
-        kitchenCompleted = false;
-        saveProgress();
-        showKitchen();
+        showKitchen(true);
 
       } else if (zoneName === "bank") {
-        bankCompleted = false;
-        saveProgress();
-        showBank();
+        showBank(true);
 
       } else if (zoneName === "map") {
-        mapCompleted = false;
-        saveProgress();
-        showMapWorkshop();
+        showMapWorkshop(true);
 
       } else if (zoneName === "tower") {
-        towerCompleted = false;
-        towerStep = 0;
-        saveProgress();
-        showTower();
+        showTower(true);
       }
 
       break;
@@ -849,13 +1222,9 @@ app.addEventListener("click", function(event) {
     case "zone": {
       const index = Number(button.dataset.zone);
 
-      if (!Number.isInteger(index) || !zones[index]) return;
-
-      if (index === 0) showShop();
-      else if (index === 1) showKitchen();
-      else if (index === 2) showBank();
-      else if (index === 3) showMapWorkshop();
-      else if (index === 4) showTower();
+      if (!window.andishaOpenZone(index)) {
+        console.warn("ورود به ساختمان ناموفق بود:", index);
+      }
 
       break;
     }
@@ -880,6 +1249,7 @@ app.addEventListener("click", function(event) {
       checkTowerAnswer(Number(button.dataset.answer));
       break;
   }
+
 }, true);
 
 // ============================================
@@ -890,29 +1260,29 @@ loadProgress();
 showWelcome();
 
 // ============================================
-// 🎵🎧 ANDISHA UNIFIED MUSIC STUDIO V7
+// 🎵🎧 ANDISHA UNIFIED MUSIC STUDIO V7.1
 // ============================================
 
 (function() {
   "use strict";
 
-  if (window.__andishaUnifiedStudioV7) return;
-  window.__andishaUnifiedStudioV7 = true;
+  if (window.__andishaUnifiedStudioV71) return;
+  window.__andishaUnifiedStudioV71 = true;
 
   const MUSIC_KEY = "andishaMusic";
   const TRACK_KEY = "andishaTrack";
   const VOLUME_KEY = "andishaVolume";
   const POSITION_KEY = "andishaMusicPanelPosition";
 
-  const oldEnabled = localStorage.getItem(MUSIC_KEY);
-  const oldEnabledV2 = localStorage.getItem("andishaMusicEnabled");
+  const oldEnabled = storageGet(MUSIC_KEY, null);
+  const oldEnabledV2 = storageGet("andishaMusicEnabled", "false");
 
   let enabled = oldEnabled !== null
     ? oldEnabled === "true"
     : oldEnabledV2 === "true";
 
-  let track = Number(localStorage.getItem(TRACK_KEY)) || 0;
-  let volume = Number(localStorage.getItem(VOLUME_KEY) || 35);
+  let track = Number(storageGet(TRACK_KEY, "0")) || 0;
+  let volume = Number(storageGet(VOLUME_KEY, "35"));
 
   track = Math.max(0, Math.min(2, track));
   volume = Math.max(0, Math.min(100, volume));
@@ -924,7 +1294,7 @@ showWelcome();
     "bottom-left"
   ];
 
-  let panelPosition = localStorage.getItem(POSITION_KEY);
+  let panelPosition = storageGet(POSITION_KEY, "bottom-left");
 
   if (VALID_POSITIONS.indexOf(panelPosition) === -1) {
     panelPosition = "bottom-left";
@@ -955,7 +1325,6 @@ showWelcome();
   let player = null;
 
   let status = null;
-  let voiceStatus = null;
 
   let voiceActive = false;
   let feedbackBusy = false;
@@ -966,6 +1335,10 @@ showWelcome();
   let feedbackTimer = null;
 
   const activeOscillators = new Set();
+
+  // ==========================================
+  // ساخت سیستم صوتی
+  // ==========================================
 
   function setupAudio() {
     const AudioAPI =
@@ -998,15 +1371,27 @@ showWelcome();
     return true;
   }
 
+  // ==========================================
+  // توقف صداهای ساخته‌شده
+  // ==========================================
+
   function stopGeneratedSounds() {
     activeOscillators.forEach(function(oscillator) {
       try {
         oscillator.stop();
       } catch (error) {}
+
+      try {
+        oscillator.disconnect();
+      } catch (error) {}
     });
 
     activeOscillators.clear();
   }
+
+  // ==========================================
+  // تولید نت
+  // ==========================================
 
   function tone(freq, duration, type, strength, startAt) {
     if (!setupAudio()) return;
@@ -1039,13 +1424,20 @@ showWelcome();
 
     oscillator.onended = function() {
       activeOscillators.delete(oscillator);
-      oscillator.disconnect();
-      gain.disconnect();
+
+      try {
+        oscillator.disconnect();
+        gain.disconnect();
+      } catch (error) {}
     };
 
     oscillator.start(startTime);
     oscillator.stop(startTime + duration);
   }
+
+  // ==========================================
+  // پخش موسیقی پس‌زمینه
+  // ==========================================
 
   function playNote() {
     if (
@@ -1063,12 +1455,7 @@ showWelcome();
 
     noteIndex++;
 
-    tone(
-      frequency,
-      0.28,
-      "triangle",
-      0.12
-    );
+    tone(frequency, 0.28, "triangle", 0.12);
   }
 
   function startMusic() {
@@ -1112,6 +1499,10 @@ showWelcome();
     }
   }
 
+  // ==========================================
+  // ادامه صدای قبلی
+  // ==========================================
+
   function resumePreviousAudio() {
     const resumePhone = resumePhoneAfterVoice;
     const resumeMusic = resumeMusicAfterVoice;
@@ -1136,6 +1527,10 @@ showWelcome();
       startMusic();
     }
   }
+
+  // ==========================================
+  // هماهنگی با صدای راهنما
+  // ==========================================
 
   function beforeVoice() {
     if (!voiceActive && !feedbackBusy) {
@@ -1179,17 +1574,21 @@ showWelcome();
     resumePreviousAudio();
   }
 
-  function playFeedback(correct) {
-    if (voiceActive) {
-      voiceActive = false;
-    } else {
-      if (timer) {
-        resumeMusicAfterVoice = true;
-      }
+  // ==========================================
+  // صدای پاسخ صحیح و غلط
+  // ==========================================
 
-      if (player && !player.paused && player.src) {
-        resumePhoneAfterVoice = true;
-      }
+  function playFeedback(correct) {
+
+    // صدای راهنما همیشه اولویت دارد.
+    if (voiceActive) return;
+
+    if (timer) {
+      resumeMusicAfterVoice = true;
+    }
+
+    if (player && !player.paused && player.src) {
+      resumePhoneAfterVoice = true;
     }
 
     stopMusic();
@@ -1248,22 +1647,26 @@ showWelcome();
     }
   }
 
-  // API هماهنگی با فایل MP3
+  // ==========================================
+  // API هماهنگی با فایل صوتی MP3
+  // ==========================================
+
   window.andishaAudioCoordinator = {
     beforeVoice: beforeVoice,
     afterVoice: afterVoice,
     playFeedback: playFeedback
   };
 
-  // ============================================
+  // ==========================================
   // حباب شناور
-  // ============================================
+  // ==========================================
 
   const bubble = document.createElement("button");
 
   bubble.id = "andishaMusicBubble";
   bubble.type = "button";
   bubble.textContent = "🎵";
+
   bubble.setAttribute(
     "aria-label",
     "باز کردن استودیوی موسیقی"
@@ -1288,9 +1691,9 @@ showWelcome();
 
   document.body.appendChild(bubble);
 
-  // ============================================
+  // ==========================================
   // پنل موسیقی
-  // ============================================
+  // ==========================================
 
   const panel = document.createElement("section");
 
@@ -1316,33 +1719,65 @@ showWelcome();
   `;
 
   panel.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:8px">
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:6px;
+      margin-bottom:8px">
+
       <h3 style="margin:0;color:#ffe18a;font-size:14px">
         🎵 استودیوی موسیقی اندیشا
       </h3>
 
-      <button id="andishaMusicCollapse" type="button"
+      <button id="andishaMusicCollapse"
+        type="button"
         aria-label="جمع کردن استودیو"
-        style="padding:4px 9px;margin:0;border:0;border-radius:8px;background:#f5c75e;color:#142b52;font-weight:bold;cursor:pointer">
+        style="
+          padding:4px 9px;
+          margin:0;
+          border:0;
+          border-radius:8px;
+          background:#f5c75e;
+          color:#142b52;
+          font-weight:bold;
+          cursor:pointer">
         ✕
       </button>
+
     </div>
 
     <button id="andishaMusicToggle" type="button">
-      ${enabled ? "🔇 خاموش کردن موسیقی" : "🎶 روشن کردن موسیقی"}
+      ${enabled
+        ? "🔇 خاموش کردن موسیقی"
+        : "🎶 روشن کردن موسیقی"}
     </button>
 
-    <select id="andishaTrack" aria-label="انتخاب موسیقی"
-      style="width:100%;padding:9px;margin:8px 0;border-radius:9px">
+    <select id="andishaTrack"
+      aria-label="انتخاب موسیقی"
+      style="
+        width:100%;
+        padding:9px;
+        margin:8px 0;
+        border-radius:9px">
+
       ${tracks.map(function(item, index) {
-        return `<option value="${index}">${item.name}</option>`;
+        return `
+          <option value="${index}">
+            ${item.name}
+          </option>
+        `;
       }).join("")}
+
     </select>
 
     <label for="andishaVolume">🔊 میزان صدا</label>
 
-    <input id="andishaVolume" type="range"
-      min="0" max="100" value="${volume}"
+    <input id="andishaVolume"
+      type="range"
+      min="0"
+      max="100"
+      value="${volume}"
       style="width:100%">
 
     <label for="andishaMusicPanelPosition"
@@ -1352,22 +1787,32 @@ showWelcome();
 
     <select id="andishaMusicPanelPosition"
       aria-label="محل نمایش استودیو"
-      style="width:100%;padding:9px;margin:4px 0 8px;border-radius:9px">
+      style="
+        width:100%;
+        padding:9px;
+        margin:4px 0 8px;
+        border-radius:9px">
+
       <option value="top-right">بالا راست</option>
       <option value="top-left">بالا چپ</option>
       <option value="bottom-right">پایین راست</option>
       <option value="bottom-left">پایین چپ</option>
+
     </select>
 
     <hr style="border-color:#ffffff33">
 
     <h3 style="color:#ffe18a">🎧 موسیقی دلخواه من</h3>
 
-    <input id="andishaMusicFile" type="file"
-      accept="audio/*" style="max-width:100%;color:white">
+    <input id="andishaMusicFile"
+      type="file"
+      accept="audio/*"
+      style="max-width:100%;color:white">
 
-    <audio id="andishaPhonePlayer" controls
-      style="width:100%;margin-top:8px"></audio>
+    <audio id="andishaPhonePlayer"
+      controls
+      style="width:100%;margin-top:8px">
+    </audio>
 
     <p id="andishaPhoneMessage">
       هنوز آهنگی انتخاب نشده است.
@@ -1400,9 +1845,9 @@ showWelcome();
     `;
   });
 
-  // ============================================
+  // ==========================================
   // اتصال کنترل‌ها
-  // ============================================
+  // ==========================================
 
   const toggle =
     document.getElementById("andishaMusicToggle");
@@ -1422,9 +1867,6 @@ showWelcome();
   status =
     document.getElementById("andishaMusicStatus");
 
-  voiceStatus =
-    document.getElementById("andishaVoiceStatus");
-
   const picker =
     document.getElementById("andishaMusicFile");
 
@@ -1437,9 +1879,9 @@ showWelcome();
   selector.value = String(track);
   positionSelect.value = panelPosition;
 
-  // ============================================
-  // موقعیت پنل
-  // ============================================
+  // ==========================================
+  // موقعیت پنل و حباب
+  // ==========================================
 
   function applyPanelPosition() {
     panel.style.left = "";
@@ -1488,9 +1930,9 @@ showWelcome();
   applyPanelPosition();
   applyPanelVisibility();
 
-  // ============================================
+  // ==========================================
   // باز کردن قفل صوتی مرورگر
-  // ============================================
+  // ==========================================
 
   function unlockAudioOnce() {
     setupAudio();
@@ -1508,82 +1950,87 @@ showWelcome();
     { once: true }
   );
 
-  // ============================================
+  // ==========================================
   // روشن و خاموش کردن موسیقی
-  // ============================================
+  // ==========================================
 
   toggle.addEventListener("click", function() {
     enabled = !enabled;
 
-    localStorage.setItem(MUSIC_KEY, String(enabled));
-    localStorage.setItem("andishaMusicEnabled", String(enabled));
+    storageSet(MUSIC_KEY, enabled);
+    storageSet("andishaMusicEnabled", enabled);
 
     toggle.textContent = enabled
       ? "🔇 خاموش کردن موسیقی"
       : "🎶 روشن کردن موسیقی";
 
     if (enabled) {
-      startMusic();
+      if (!voiceActive && !feedbackBusy) {
+        startMusic();
+      }
     } else {
       stopMusic();
       stopGeneratedSounds();
+      resumeMusicAfterVoice = false;
     }
   });
 
-  // ============================================
+  // ==========================================
   // انتخاب موسیقی
-  // ============================================
+  // ==========================================
 
   selector.addEventListener("change", function() {
     track = Number(selector.value);
 
-    localStorage.setItem(TRACK_KEY, String(track));
+    storageSet(TRACK_KEY, track);
 
-    localStorage.setItem(
+    storageSet(
       "andishaMusicTrack",
       ["calm", "happy", "adventure"][track]
     );
 
-    if (enabled) {
+    if (enabled && !voiceActive && !feedbackBusy) {
       stopMusic();
       stopGeneratedSounds();
       startMusic();
     }
   });
 
-  // ============================================
+  // ==========================================
   // میزان صدا
-  // ============================================
+  // ==========================================
 
   slider.addEventListener("input", function() {
     volume = Number(slider.value);
 
-    localStorage.setItem(VOLUME_KEY, String(volume));
+    storageSet(VOLUME_KEY, volume);
 
     if (master) {
       master.gain.value = volume / 100;
     }
   });
 
-  // ============================================
+  // ==========================================
   // محل پنل
-  // ============================================
+  // ==========================================
 
   positionSelect.addEventListener("change", function() {
     const value = positionSelect.value;
 
-    if (VALID_POSITIONS.indexOf(value) === -1) return;
+    if (VALID_POSITIONS.indexOf(value) === -1) {
+      return;
+    }
 
     panelPosition = value;
 
-    localStorage.setItem(POSITION_KEY, panelPosition);
+    storageSet(POSITION_KEY, panelPosition);
 
     applyPanelPosition();
   });
 
-  // ============================================
+  // ==========================================
   // جمع و باز کردن پنل
-  // ============================================
+  // ==========================================
 
   collapseButton.addEventListener("click", function() {
     panelOpen = false;
@@ -1595,9 +2042,9 @@ showWelcome();
     applyPanelVisibility();
   });
 
-  // ============================================
+  // ==========================================
   // انتخاب آهنگ از گوشی
-  // ============================================
+  // ==========================================
 
   picker.addEventListener("change", function() {
     const file = picker.files[0];
@@ -1639,9 +2086,9 @@ showWelcome();
     }
   });
 
-  // ============================================
-  // توقف موسیقی هنگام تغییر صفحه
-  // ============================================
+  // ==========================================
+  // توقف گفتار مرورگر هنگام تغییر صفحه
+  // ==========================================
 
   app.addEventListener("click", function() {
     if ("speechSynthesis" in window) {
@@ -1649,14 +2096,16 @@ showWelcome();
     }
   });
 
-  // ============================================
-  // صدای پاسخ‌ها
-  // ============================================
+  // ==========================================
+  // تشخیص پاسخ‌ها و پخش صدای بازخورد
+  // ==========================================
 
   document.addEventListener("click", function(event) {
     const target = event.target;
 
-    if (!target || typeof target.closest !== "function") return;
+    if (!target || typeof target.closest !== "function") {
+      return;
+    }
 
     const button = target.closest("#app button[data-action]");
 
@@ -1668,7 +2117,9 @@ showWelcome();
       ? window.andishaGetExpectedAnswer(action)
       : null;
 
-    if (expected === null || expected === undefined) return;
+    if (expected === null || expected === undefined) {
+      return;
+    }
 
     const answer = Number(button.dataset.answer);
 
@@ -1676,13 +2127,18 @@ showWelcome();
 
   }, true);
 
-  // ============================================
-  // پاک‌سازی
-  // ============================================
+  // ==========================================
+  // پاک‌سازی هنگام خروج
+  // ==========================================
 
   window.addEventListener("beforeunload", function() {
     stopMusic();
     stopGeneratedSounds();
+
+    if (feedbackTimer) {
+      clearTimeout(feedbackTimer);
+      feedbackTimer = null;
+    }
 
     if (player) {
       player.pause();
@@ -1701,6 +2157,6 @@ showWelcome();
     toggle.textContent = "🔇 خاموش کردن موسیقی";
   }
 
-  console.log("ANDISHA UNIFIED MUSIC STUDIO V7 READY");
+  console.log("ANDISHA UNIFIED MUSIC STUDIO V7.1 READY");
 
 })();
