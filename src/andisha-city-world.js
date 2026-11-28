@@ -2,41 +2,97 @@
 "use strict";
 
 /* ============================================
-   ANDISHA CITY WORLD V2.0
+   ANDISHA CITY WORLD V2.1
    شهر فانتزی سه‌بعدی اندیشا
-   مستقل از main.js و سیستم صوتی
+   نسخه اصلاح‌شده و یکپارچه
+   مستقل از main.js و سیستم امتیازدهی
    ============================================ */
 
 (function () {
-  if (window.__ANDISHA_CITY_WORLD_V20__) return;
-  window.__ANDISHA_CITY_WORLD_V20__ = true;
+
+  if (window.__ANDISHA_CITY_WORLD_V21__) return;
+  window.__ANDISHA_CITY_WORLD_V21__ = true;
 
   const zones = [
-    { name: "فروشگاه", icon: "🛍️", color: "#ff9f43", light: "#ffe0a8", desc: "خرید و محاسبه تخفیف" },
-    { name: "آشپزخانه", icon: "🍳", color: "#20bf9f", light: "#b7f4df", desc: "آزمایش تناسب" },
-    { name: "بانک", icon: "🏦", color: "#4b8cf5", light: "#c5ddff", desc: "دنیای درصدها" },
-    { name: "نقشه", icon: "🗺️", color: "#a477ed", light: "#e5d4ff", desc: "سفر به دنیای اندازه‌ها" },
-    { name: "برج", icon: "🏙️", color: "#ef6b9b", light: "#ffd1e1", desc: "چالش نهایی قهرمانان" }
+    {
+      name: "فروشگاه",
+      key: "shop",
+      icon: "🛍️",
+      color: "#ff9f43",
+      light: "#ffe0a8",
+      desc: "خرید و محاسبه تخفیف"
+    },
+    {
+      name: "آشپزخانه",
+      key: "kitchen",
+      icon: "🍳",
+      color: "#20bf9f",
+      light: "#b7f4df",
+      desc: "آزمایش تناسب"
+    },
+    {
+      name: "بانک",
+      key: "bank",
+      icon: "🏦",
+      color: "#4b8cf5",
+      light: "#c5ddff",
+      desc: "دنیای درصدها"
+    },
+    {
+      name: "نقشه",
+      key: "map",
+      icon: "🗺️",
+      color: "#a477ed",
+      light: "#e5d4ff",
+      desc: "سفر به دنیای اندازه‌ها"
+    },
+    {
+      name: "برج",
+      key: "tower",
+      icon: "🏙️",
+      color: "#ef6b9b",
+      light: "#ffd1e1",
+      desc: "چالش نهایی قهرمانان"
+    }
   ];
 
+  /* جلوگیری از باقی‌ماندن نسخه قبلی */
+
+  [
+    "andisha-city-launcher",
+    "andisha-city-world",
+    "andisha-city-world-style"
+  ].forEach(function (id) {
+    const old = document.getElementById(id);
+    if (old) old.remove();
+  });
+
+  /* ============================================
+     CSS
+     ============================================ */
+
   const style = document.createElement("style");
+  style.id = "andisha-city-world-style";
 
   style.textContent = `
+
     #andisha-city-launcher {
       position: fixed;
       right: 16px;
       bottom: 85px;
       z-index: 9998;
-      border: 2px solid white;
+      border: 2px solid #fff;
       border-radius: 18px;
       padding: 12px 17px;
       color: white;
       background: linear-gradient(135deg,#237de0,#142b52);
-      box-shadow: 0 7px 0 #10234a, 0 12px 24px #10234a55;
+      box-shadow: 0 7px 0 #10234a,
+                  0 12px 24px #10234a55;
       font-family: inherit;
       font-size: 14px;
       font-weight: 900;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
 
     #andisha-city-launcher:active {
@@ -50,15 +106,18 @@
       z-index: 9999;
       display: none;
       overflow-y: auto;
+      overflow-x: hidden;
       box-sizing: border-box;
       padding: 18px 12px 30px;
       font-family: inherit;
-      background:
-        linear-gradient(180deg,
-          #67c8ff 0%,
-          #b5e9ff 48%,
-          #c9f3c9 100%);
+      background: linear-gradient(
+        180deg,
+        #67c8ff 0%,
+        #b5e9ff 48%,
+        #c9f3c9 100%
+      );
       isolation: isolate;
+      overscroll-behavior: contain;
     }
 
     #andisha-city-world.open {
@@ -67,8 +126,14 @@
     }
 
     @keyframes andishaWorldIn {
-      from { opacity: 0; transform: scale(.97); }
-      to { opacity: 1; transform: scale(1); }
+      from {
+        opacity: 0;
+        transform: scale(.97);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
 
     #andisha-city-world .world-sun {
@@ -92,13 +157,14 @@
     #andisha-city-world .world-cloud {
       position: absolute;
       top: 95px;
-      right: -100px;
+      right: -120px;
       width: 100px;
       height: 28px;
       border-radius: 30px;
       background: #ffffffbb;
       z-index: -1;
       animation: andishaCloud 24s linear infinite;
+      pointer-events: none;
     }
 
     #andisha-city-world .world-cloud:before,
@@ -124,7 +190,7 @@
 
     @keyframes andishaCloud {
       from { transform: translateX(0); }
-      to { transform: translateX(-120vw); }
+      to { transform: translateX(-130vw); }
     }
 
     #andisha-city-world .world-header {
@@ -153,12 +219,15 @@
     #andisha-city-world .world-scene {
       position: relative;
       max-width: 680px;
-      min-height: 135px;
-      margin: 0 auto 15px;
+      min-height: 150px;
+      margin: 0 auto 17px;
       overflow: hidden;
       border: 3px solid #ffffffcc;
       border-radius: 22px;
-      background: linear-gradient(#8edbff 0 65%,#72ce82 65%);
+      background: linear-gradient(
+        #8edbff 0 65%,
+        #72ce82 65%
+      );
       box-shadow: 0 7px 0 #397c6380;
     }
 
@@ -171,7 +240,10 @@
       background: #5bbd70;
     }
 
-    #andisha-city-world .scene-hill.one { left: -30px; }
+    #andisha-city-world .scene-hill.one {
+      left: -30px;
+    }
+
     #andisha-city-world .scene-hill.two {
       right: -30px;
       background: #49ad68;
@@ -184,7 +256,7 @@
       width: 100%;
       height: 25px;
       background: #78899b;
-      border-top: 3px solid #ffffff;
+      border-top: 3px solid white;
     }
 
     #andisha-city-world .scene-road:after {
@@ -214,7 +286,11 @@
       width: 57px;
       height: 25px;
       background: #e87565;
-      clip-path: polygon(50% 0,100% 100%,0 100%);
+      clip-path: polygon(
+        50% 0,
+        100% 100%,
+        0 100%
+      );
     }
 
     #andisha-city-world .scene-house:after {
@@ -228,12 +304,16 @@
       border: 2px solid white;
     }
 
-    #andisha-city-world .scene-house.h1 { left: 17%; }
+    #andisha-city-world .scene-house.h1 {
+      left: 17%;
+    }
+
     #andisha-city-world .scene-house.h2 {
       left: 43%;
       height: 76px;
       background: #b28bea;
     }
+
     #andisha-city-world .scene-house.h3 {
       right: 17%;
       height: 53px;
@@ -252,23 +332,35 @@
       position: relative;
       min-height: 165px;
       overflow: hidden;
+      box-sizing: border-box;
       border: 3px solid white;
       border-radius: 21px;
       padding: 13px 8px;
       color: #17336d;
-      background: linear-gradient(145deg,#ffffff,#f0f7ff);
+      background: linear-gradient(
+        145deg,
+        #ffffff,
+        #f0f7ff
+      );
       box-shadow:
         0 8px 0 #17336d24,
         0 13px 22px #17336d25;
       font-family: inherit;
       cursor: pointer;
-      transition: transform .18s ease, box-shadow .18s ease;
+      transition:
+        transform .18s ease,
+        box-shadow .18s ease;
       -webkit-tap-highlight-color: transparent;
     }
 
     #andisha-city-world .world-building:active {
-      transform: translateY(6px) scale(.98);
+      transform: translateY(5px) scale(.98);
       box-shadow: 0 2px 0 #17336d24;
+    }
+
+    #andisha-city-world .world-building:focus-visible {
+      outline: 3px solid #17336d;
+      outline-offset: 3px;
     }
 
     #andisha-city-world .building-roof {
@@ -328,12 +420,16 @@
 
     #andisha-city-world .world-close {
       display: block;
-      margin: 15px auto 10px;
+      margin: 17px auto 10px;
       border: 2px solid white;
       border-radius: 16px;
       padding: 12px 27px;
       color: white;
-      background: linear-gradient(135deg,#237de0,#17336d);
+      background: linear-gradient(
+        135deg,
+        #237de0,
+        #17336d
+      );
       box-shadow: 0 5px 0 #10234a;
       font-family: inherit;
       font-size: 15px;
@@ -341,13 +437,45 @@
       cursor: pointer;
     }
 
+    #andisha-city-world .world-close:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #10234a;
+    }
+
+    #andisha-world-toast {
+      position: fixed;
+      z-index: 10001;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #17336d;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-family: inherit;
+      font-size: 13px;
+      max-width: 85%;
+      text-align: center;
+      box-shadow: 0 5px 15px #0003;
+    }
+
     @media (max-width: 360px) {
-      #andisha-city-world .world-buildings { gap: 9px; }
-      #andisha-city-world .world-building { min-height: 145px; }
+      #andisha-city-world .world-buildings {
+        gap: 9px;
+      }
+
+      #andisha-city-world .world-building {
+        min-height: 145px;
+      }
+
       #andisha-city-world .building-icon {
         width: 65px;
         height: 65px;
         font-size: 37px;
+      }
+
+      #andisha-city-world .world-header h2 {
+        font-size: 20px;
       }
     }
 
@@ -362,13 +490,27 @@
 
   document.head.appendChild(style);
 
+  /* ============================================
+     ساخت دکمه ورود
+     ============================================ */
+
   const launcher = document.createElement("button");
+
   launcher.id = "andisha-city-launcher";
   launcher.type = "button";
   launcher.textContent = "🏙️ شهر فانتزی اندیشا";
+  launcher.setAttribute("aria-label", "ورود به شهر فانتزی اندیشا");
+
+  /* ============================================
+     ساخت محیط شهر
+     ============================================ */
 
   const world = document.createElement("div");
+
   world.id = "andisha-city-world";
+  world.setAttribute("role", "dialog");
+  world.setAttribute("aria-label", "شهر هوشمند اندیشا");
+  world.setAttribute("aria-modal", "true");
 
   world.innerHTML = `
     <div class="world-sun"></div>
@@ -401,12 +543,26 @@
 
   const buildings = world.querySelector(".world-buildings");
 
+  /* ============================================
+     ساخت پنج ساختمان
+     ============================================ */
+
   zones.forEach(function (zone, index) {
+
     const button = document.createElement("button");
+
     button.type = "button";
     button.className = "world-building";
-    button.style.setProperty("--building-color", zone.color);
-    button.style.setProperty("--building-light", zone.light);
+
+    button.style.setProperty(
+      "--building-color",
+      zone.color
+    );
+
+    button.style.setProperty(
+      "--building-light",
+      zone.light
+    );
 
     button.innerHTML =
       '<span class="building-roof"></span>' +
@@ -419,22 +575,80 @@
     });
 
     buildings.appendChild(button);
+
   });
 
+  /* ============================================
+     باز و بسته کردن شهر
+     ============================================ */
+
   function openWorld() {
+
     world.classList.add("open");
+
+    document.body.style.overflow = "hidden";
+
   }
 
   function closeWorld() {
+
     world.classList.remove("open");
+
+    document.body.style.overflow = "";
+
   }
 
+  /* ============================================
+     پیام کوتاه
+     ============================================ */
+
+  let toastTimer = null;
+
+  function showMessage(message) {
+
+    let toast = document.getElementById(
+      "andisha-world-toast"
+    );
+
+    if (!toast) {
+
+      toast = document.createElement("div");
+
+      toast.id = "andisha-world-toast";
+
+      toast.setAttribute("role", "status");
+
+      document.body.appendChild(toast);
+
+    }
+
+    toast.textContent = message;
+    toast.style.display = "block";
+
+    if (toastTimer) {
+      clearTimeout(toastTimer);
+    }
+
+    toastTimer = window.setTimeout(function () {
+
+      toast.style.display = "none";
+
+    }, 2500);
+
+  }
+
+  /* ============================================
+     پیدا کردن دکمه اصلی هر منطقه
+     ============================================ */
+
   function findMainZoneButton(index) {
+
     const buttons = document.querySelectorAll(
       '#app button[data-action="zone"]'
     );
 
     for (let i = 0; i < buttons.length; i++) {
+
       const values = [
         buttons[i].getAttribute("data-index"),
         buttons[i].getAttribute("data-zone-index"),
@@ -442,59 +656,108 @@
       ];
 
       for (let j = 0; j < values.length; j++) {
-        if (values[j] !== null && Number(values[j]) === index) {
+
+        if (
+          values[j] !== null &&
+          Number(values[j]) === index
+        ) {
           return buttons[i];
         }
+
       }
+
     }
 
     return null;
+
   }
+
+  /* ============================================
+     ورود به ساختمان
+     ============================================ */
 
   function enterZone(index) {
+
+    if (index < 0 || index >= zones.length) {
+      showMessage("ساختمان موردنظر پیدا نشد.");
+      return;
+    }
+
     closeWorld();
 
-    if (typeof window.andishaOpenZone === "function") {
-      window.andishaOpenZone(index);
+    const zone = zones[index];
 
-      if (typeof window.andishaPlayZoneVoice === "function") {
-        window.andishaPlayZoneVoice(index);
+    try {
+
+      /*
+       * مسیر مستقیم:
+       * استفاده از API اصلی بازی
+       */
+
+      if (typeof window.andishaOpenZone === "function") {
+
+        window.andishaOpenZone(index);
+
+        /*
+         * پخش صدای راهنما از سیستم صوتی V4
+         * بدون ایجاد کلیک مصنوعی
+         */
+
+        if (
+          typeof window.andishaPlayZoneVoice === "function"
+        ) {
+
+          window.andishaPlayZoneVoice(index);
+
+        } else if (
+          typeof window.andishaPlayVoice === "function"
+        ) {
+
+          window.andishaPlayVoice(zone.key);
+
+        }
+
+        return;
+
       }
 
-      return;
+      /*
+       * مسیر جایگزین:
+       * کلیک روی دکمه اصلی بازی
+       */
+
+      const originalButton = findMainZoneButton(index);
+
+      if (originalButton) {
+
+        originalButton.click();
+
+        return;
+
+      }
+
+      showMessage(
+        "ساختمان پیدا شد، اما اتصال مرحله اصلی برقرار نیست."
+      );
+
+    } catch (error) {
+
+      console.error(
+        "ANDISHA ZONE CONNECTION ERROR:",
+        error
+      );
+
+      showMessage(
+        "ورود به ساختمان با خطا روبه‌رو شد."
+      );
+
     }
 
-    const originalButton = findMainZoneButton(index);
-
-    if (originalButton) {
-      originalButton.click();
-      return;
-    }
-
-    showMessage("ورود به این ساختمان ممکن نشد.");
   }
 
-  function showMessage(message) {
-    let toast = document.getElementById("andisha-world-toast");
-
-    if (!toast) {
-      toast = document.createElement("div");
-      toast.id = "andisha-world-toast";
-      toast.style.cssText =
-        "position:fixed;z-index:10001;bottom:25px;left:50%;" +
-        "transform:translateX(-50%);background:#17336d;color:white;" +
-        "padding:12px 18px;border-radius:14px;font-family:inherit;" +
-        "font-size:13px;max-width:85%;text-align:center;";
-      document.body.appendChild(toast);
-    }
-
-    toast.textContent = message;
-    toast.style.display = "block";
-
-    window.setTimeout(function () {
-      toast.style.display = "none";
-    }, 2500);
-  }
+  /* ============================================
+     رویدادهای دکمه‌ها
+     ============================================ */
 
   launcher.addEventListener("click", openWorld);
 
@@ -504,15 +767,43 @@
   );
 
   world.addEventListener("click", function (event) {
-    if (event.target === world) closeWorld();
+
+    if (event.target === world) {
+      closeWorld();
+    }
+
   });
+
+  document.addEventListener("keydown", function (event) {
+
+    if (
+      event.key === "Escape" &&
+      world.classList.contains("open")
+    ) {
+
+      closeWorld();
+
+    }
+
+  });
+
+  /* ============================================
+     نصب در صفحه
+     ============================================ */
 
   document.body.appendChild(launcher);
   document.body.appendChild(world);
 
+  /* ============================================
+     API عمومی افزونه
+     ============================================ */
+
   window.andishaOpenCityWorld = openWorld;
   window.andishaCloseCityWorld = closeWorld;
+  window.andishaEnterCityZone = enterZone;
 
-  console.log("ANDISHA CITY WORLD V2.0 READY");
+  console.log(
+    "ANDISHA CITY WORLD V2.1 READY"
+  );
 
 })();
