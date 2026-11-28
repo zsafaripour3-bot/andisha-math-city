@@ -1,18 +1,18 @@
 
 "use strict";
 
-/* ==================================================
+/* =========================================================
    ANDISHA SMART CITY
-   FANTASY WORLD V3.1
+   FANTASY WORLD V4.0
+   Magical 3D Island Edition
    Independent visual expansion
-   Preserves main game, scores and audio system
-   Live progress refresh + robust completion detection
-   ================================================== */
+   Preserves main game, scores, missions and audio
+   ========================================================= */
 
 (function () {
 
-  if (window.__ANDISHA_FANTASY_WORLD_V31__) return;
-  window.__ANDISHA_FANTASY_WORLD_V31__ = true;
+  if (window.__ANDISHA_FANTASY_WORLD_V40__) return;
+  window.__ANDISHA_FANTASY_WORLD_V40__ = true;
 
   const zones = [
     {
@@ -77,11 +77,11 @@
     "andishaTowerCompleted"
   ];
 
-  const styleId = "andisha-fantasy-v31-style";
   const worldId = "andisha-fantasy-world";
   const launcherId = "andisha-fantasy-launcher";
+  const styleId = "andisha-fantasy-v40-style";
 
-  /* ---------- Cleanup old visual versions ---------- */
+  /* ---------- Remove previous visual layers ---------- */
 
   [
     "andisha-city-launcher",
@@ -90,13 +90,14 @@
     "andisha-fantasy-launcher",
     "andisha-fantasy-world",
     "andisha-fantasy-v30-style",
-    "andisha-fantasy-v31-style"
+    "andisha-fantasy-v31-style",
+    "andisha-fantasy-v40-style"
   ].forEach(function (id) {
-    const old = document.getElementById(id);
-    if (old) old.remove();
+    const element = document.getElementById(id);
+    if (element) element.remove();
   });
 
-  /* ---------- Storage helpers ---------- */
+  /* ---------- Storage ---------- */
 
   function readStorage(key) {
     try {
@@ -128,8 +129,7 @@
   }
 
   function getAvatar() {
-    const saved = readStorage("andishaFantasyAvatar");
-    const index = Number(saved);
+    const index = Number(readStorage("andishaFantasyAvatar"));
 
     return Number.isInteger(index) &&
       index >= 0 &&
@@ -142,11 +142,11 @@
     try {
       localStorage.setItem("andishaFantasyAvatar", String(index));
     } catch (error) {
-      console.warn("Avatar could not be saved.");
+      console.warn("ANDISHA: Avatar could not be saved.");
     }
   }
 
-  /* ---------- Main stylesheet ---------- */
+  /* ---------- Styles ---------- */
 
   const style = document.createElement("style");
   style.id = styleId;
@@ -154,453 +154,607 @@
   style.textContent = `
 
   #${launcherId},
-  #${worldId} {
-    font-family: inherit;
+  #${worldId},
+  #${worldId} * {
     box-sizing: border-box;
+    font-family: inherit;
   }
+
+  /* MAIN LAUNCHER */
 
   #${launcherId} {
     position: fixed;
     right: 15px;
     bottom: 85px;
     z-index: 9998;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
     border: 2px solid #fff;
     border-radius: 20px;
-    padding: 12px 17px;
     color: #fff;
+    background: linear-gradient(135deg,#9b65ff,#3544a7);
+    box-shadow:
+      0 6px 0 #30215f,
+      0 12px 28px #17255466;
     font-size: 14px;
-    font-weight: 900;
-    background: linear-gradient(135deg,#8154ed,#263b91);
-    box-shadow: 0 6px 0 #30215f, 0 12px 28px #17255455;
+    font-weight: 1000;
     cursor: pointer;
-    animation: andishaLauncherFloat 3s ease-in-out infinite;
+    animation: fw40Launcher 3s ease-in-out infinite;
     -webkit-tap-highlight-color: transparent;
   }
 
-  @keyframes andishaLauncherFloat {
+  @keyframes fw40Launcher {
     0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
+    50% { transform: translateY(-6px); }
   }
+
+  /* WORLD BACKGROUND */
 
   #${worldId} {
     position: fixed;
     inset: 0;
     z-index: 9999;
     display: none;
-    overflow-y: auto;
     overflow-x: hidden;
-    padding: 14px 12px 35px;
-    color: white;
+    overflow-y: auto;
+    padding: 15px 12px 38px;
+    color: #fff;
     background:
-      radial-gradient(ellipse at 50% 15%,#627ee8 0%,transparent 42%),
-      linear-gradient(180deg,#111d53 0%,#263d83 47%,#172b5e 100%);
+      radial-gradient(ellipse at 50% 12%,#8ca5ff 0%,transparent 35%),
+      radial-gradient(ellipse at 10% 70%,#6e54bd 0%,transparent 35%),
+      linear-gradient(180deg,#17275f 0%,#314b91 48%,#152554 100%);
     isolation: isolate;
     overscroll-behavior: contain;
   }
 
   #${worldId}.open {
     display: block;
-    animation: andishaWorldAppear .4s ease;
+    animation: fw40Appear .45s ease;
   }
 
-  @keyframes andishaWorldAppear {
-    from { opacity: 0; transform: scale(.96); }
-    to { opacity: 1; transform: scale(1); }
+  @keyframes fw40Appear {
+    from {
+      opacity: 0;
+      transform: scale(.97);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
-  #${worldId} *,
-  #${worldId} *:before,
-  #${worldId} *:after {
-    box-sizing: border-box;
-  }
+  /* SKY DECORATIONS */
 
-  #${worldId} .fw-stars {
+  #${worldId} .fw40-sky {
     position: fixed;
     inset: 0;
     z-index: -1;
+    overflow: hidden;
     pointer-events: none;
-    background-image:
-      radial-gradient(2px 2px at 10% 20%,#fff 50%,transparent 100%),
-      radial-gradient(2px 2px at 80% 15%,#fff 50%,transparent 100%),
-      radial-gradient(3px 3px at 60% 35%,#fff 50%,transparent 100%),
-      radial-gradient(2px 2px at 25% 60%,#fff 50%,transparent 100%),
-      radial-gradient(2px 2px at 90% 75%,#fff 50%,transparent 100%),
-      radial-gradient(3px 3px at 40% 85%,#fff 50%,transparent 100%);
-    opacity: .8;
-    animation: fwTwinkle 4s ease-in-out infinite alternate;
   }
 
-  @keyframes fwTwinkle {
-    from { opacity: .4; }
+  #${worldId} .fw40-stars {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(2px 2px at 10% 15%,#fff 50%,transparent 100%),
+      radial-gradient(3px 3px at 80% 18%,#fff 50%,transparent 100%),
+      radial-gradient(2px 2px at 65% 42%,#fff 50%,transparent 100%),
+      radial-gradient(3px 3px at 25% 52%,#fff 50%,transparent 100%),
+      radial-gradient(2px 2px at 92% 70%,#fff 50%,transparent 100%),
+      radial-gradient(2px 2px at 43% 85%,#fff 50%,transparent 100%);
+    animation: fw40Twinkle 4s ease-in-out infinite alternate;
+  }
+
+  @keyframes fw40Twinkle {
+    from { opacity: .35; }
     to { opacity: 1; }
   }
 
-  #${worldId} .fw-orb {
+  #${worldId} .fw40-moon {
     position: absolute;
-    top: 95px;
-    left: -45px;
-    width: 130px;
-    height: 130px;
+    top: 85px;
+    left: 7%;
+    width: 65px;
+    height: 65px;
     border-radius: 50%;
-    background: #b99aff;
-    opacity: .13;
-    filter: blur(15px);
-    pointer-events: none;
+    background: #fff3bb;
+    box-shadow:
+      0 0 20px #fff3bb88,
+      0 0 55px #fff3bb55;
   }
 
-  #${worldId} .fw-header {
-    max-width: 720px;
-    margin: 8px auto 15px;
+  #${worldId} .fw40-cloud {
+    position: absolute;
+    width: 105px;
+    height: 27px;
+    border-radius: 30px;
+    background: #ffffff25;
+    filter: blur(1px);
+    animation: fw40Cloud 18s linear infinite;
+  }
+
+  #${worldId} .fw40-cloud:before,
+  #${worldId} .fw40-cloud:after {
+    content: "";
+    position: absolute;
+    bottom: 8px;
+    border-radius: 50%;
+    background: #ffffff25;
+  }
+
+  #${worldId} .fw40-cloud:before {
+    left: 17px;
+    width: 38px;
+    height: 38px;
+  }
+
+  #${worldId} .fw40-cloud:after {
+    left: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  #${worldId} .fw40-cloud.one {
+    top: 155px;
+    left: -120px;
+  }
+
+  #${worldId} .fw40-cloud.two {
+    top: 290px;
+    right: -130px;
+    animation-delay: -9s;
+    animation-duration: 23s;
+  }
+
+  @keyframes fw40Cloud {
+    from { transform: translateX(0); }
+    to { transform: translateX(125vw); }
+  }
+
+  /* HEADER */
+
+  #${worldId} .fw40-header {
+    position: relative;
+    max-width: 760px;
+    margin: 8px auto 16px;
     text-align: center;
   }
 
-  #${worldId} .fw-logo {
+  #${worldId} .fw40-logo {
     display: inline-block;
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 2px;
-    color: #ffe28c;
-    padding: 7px 15px;
-    border: 1px solid #ffffff44;
+    padding: 8px 17px;
+    border: 1px solid #ffffff55;
     border-radius: 30px;
-    background: #ffffff10;
-  }
-
-  #${worldId} .fw-title {
-    margin: 13px 0 5px;
-    font-size: clamp(24px,6vw,35px);
+    color: #ffe79d;
+    background: #ffffff17;
+    font-size: 12px;
     font-weight: 1000;
-    color: #fff4bd;
-    text-shadow: 0 4px 15px #f7bd4d66;
+    letter-spacing: 2px;
+    box-shadow: 0 4px 15px #101b4d44;
   }
 
-  #${worldId} .fw-subtitle {
+  #${worldId} .fw40-title {
+    margin: 14px 0 5px;
+    color: #fff0b0;
+    font-size: clamp(25px,6vw,38px);
+    font-weight: 1000;
+    text-shadow:
+      0 3px 0 #a46a42,
+      0 7px 18px #ffcf6d66;
+  }
+
+  #${worldId} .fw40-subtitle {
     margin: 0;
+    color: #e3eaff;
     font-size: 13px;
-    color: #dce8ff;
   }
 
-  #${worldId} .fw-hero {
+  /* HERO */
+
+  #${worldId} .fw40-hero {
     position: relative;
-    max-width: 650px;
-    margin: 16px auto;
+    max-width: 670px;
+    margin: 18px auto;
     padding: 13px;
     display: flex;
     align-items: center;
     gap: 12px;
-    border: 1px solid #ffffff40;
-    border-radius: 22px;
-    background: linear-gradient(135deg,#ffffff24,#ffffff0b);
-    box-shadow: inset 0 1px 0 #ffffff35,0 12px 30px #080f3550;
-    backdrop-filter: blur(8px);
+    border: 1px solid #ffffff55;
+    border-radius: 24px;
+    background: linear-gradient(135deg,#ffffff30,#ffffff0b);
+    box-shadow:
+      inset 0 1px 0 #ffffff55,
+      0 12px 30px #07133e55;
+    backdrop-filter: blur(9px);
   }
 
-  #${worldId} .fw-avatar {
+  #${worldId} .fw40-avatar {
     flex: 0 0 68px;
     width: 68px;
     height: 68px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 22px;
+    border: 2px solid #fff;
+    border-radius: 23px;
+    color: #453274;
+    background: linear-gradient(145deg,#fff1ad,#e7a5ff);
+    box-shadow:
+      0 6px 0 #8761c0,
+      0 10px 18px #0003;
     font-size: 42px;
-    background: linear-gradient(145deg,#fff1b4,#e8a9ff);
-    box-shadow: 0 5px 0 #8e66c9;
   }
 
-  #${worldId} .fw-hero-info {
+  #${worldId} .fw40-hero-info {
     flex: 1;
     min-width: 0;
   }
 
-  #${worldId} .fw-hero-info strong {
+  #${worldId} .fw40-hero-info strong {
     display: block;
+    color: #fff4c4;
     font-size: 16px;
-    color: #fff4c9;
   }
 
-  #${worldId} .fw-hero-info small {
+  #${worldId} .fw40-hero-info small {
     display: block;
     margin-top: 5px;
-    color: #d8e5ff;
+    color: #dce8ff;
     font-size: 11px;
   }
 
-  #${worldId} .fw-avatar-change {
+  #${worldId} .fw40-avatar-change {
+    padding: 9px 11px;
     border: 1px solid #ffffff66;
-    border-radius: 12px;
-    padding: 8px 10px;
-    color: white;
-    background: #ffffff19;
-    font-family: inherit;
-    font-weight: bold;
+    border-radius: 13px;
+    color: #fff;
+    background: #ffffff1c;
+    font-size: 11px;
+    font-weight: 900;
     cursor: pointer;
   }
 
-  #${worldId} .fw-stats {
-    max-width: 650px;
+  /* STATS */
+
+  #${worldId} .fw40-stats {
+    max-width: 670px;
     margin: 0 auto 15px;
     display: grid;
     grid-template-columns: repeat(3,minmax(0,1fr));
-    gap: 8px;
+    gap: 9px;
   }
 
-  #${worldId} .fw-stat {
-    padding: 11px 5px;
+  #${worldId} .fw40-stat {
+    padding: 12px 5px;
+    border: 1px solid #ffffff45;
+    border-radius: 17px;
     text-align: center;
-    border: 1px solid #ffffff35;
-    border-radius: 16px;
-    background: #ffffff15;
+    background: linear-gradient(145deg,#ffffff25,#ffffff0b);
+    box-shadow: 0 6px 15px #0a174544;
   }
 
-  #${worldId} .fw-stat b {
+  #${worldId} .fw40-stat b {
     display: block;
-    font-size: 20px;
-    color: #ffe49a;
+    color: #ffe69a;
+    font-size: 21px;
   }
 
-  #${worldId} .fw-stat small {
+  #${worldId} .fw40-stat small {
     display: block;
-    margin-top: 3px;
+    margin-top: 4px;
+    color: #e0e9ff;
     font-size: 10px;
-    color: #dbe5ff;
   }
 
-  #${worldId} .fw-progress {
-    max-width: 650px;
-    margin: 0 auto 20px;
+  /* PROGRESS */
+
+  #${worldId} .fw40-progress {
+    max-width: 670px;
+    margin: 0 auto 22px;
     padding: 13px;
-    border: 1px solid #ffffff38;
+    border: 1px solid #ffffff45;
     border-radius: 18px;
-    background: #ffffff13;
+    background: #ffffff16;
   }
 
-  #${worldId} .fw-progress-head {
+  #${worldId} .fw40-progress-head {
     display: flex;
     justify-content: space-between;
-    gap: 8px;
-    font-size: 12px;
-    font-weight: bold;
-    color: #fff3c2;
+    gap: 10px;
     margin-bottom: 9px;
-  }
-
-  #${worldId} .fw-progress-track {
-    height: 12px;
-    border-radius: 20px;
-    overflow: hidden;
-    background: #0e1749;
-    box-shadow: inset 0 2px 4px #0005;
-  }
-
-  #${worldId} .fw-progress-fill {
-    height: 100%;
-    width: 0;
-    border-radius: 20px;
-    background: linear-gradient(90deg,#4be5c1,#ffe36b,#ff9fbd);
-    box-shadow: 0 0 12px #fff3a8;
-    transition: width .5s ease;
-  }
-
-  #${worldId} .fw-section-title {
-    max-width: 650px;
-    margin: 20px auto 12px;
-    color: #fff1b6;
-    font-size: 17px;
+    color: #fff1bd;
+    font-size: 12px;
     font-weight: 900;
   }
 
-  #${worldId} .fw-island {
-    position: relative;
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 15px 10px 20px;
-    border: 2px solid #ffffff42;
-    border-radius: 27px;
-    background:
-      radial-gradient(ellipse at 50% 0%,#ffffff18,transparent 65%),
-      linear-gradient(180deg,#415eaa88,#15265d99);
-    box-shadow: 0 15px 35px #070d3155;
+  #${worldId} .fw40-track {
+    height: 13px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: #101b4d;
+    box-shadow: inset 0 2px 5px #0007;
   }
 
-  #${worldId} .fw-island:before {
+  #${worldId} .fw40-fill {
+    width: 0;
+    height: 100%;
+    border-radius: 20px;
+    background: linear-gradient(90deg,#49e4c2,#ffe36b,#ff9ec5);
+    box-shadow: 0 0 13px #fff3a8;
+    transition: width .6s ease;
+  }
+
+  /* ISLAND */
+
+  #${worldId} .fw40-section-title {
+    max-width: 700px;
+    margin: 20px auto 14px;
+    color: #fff1b7;
+    font-size: 18px;
+    font-weight: 1000;
+    text-align: center;
+    text-shadow: 0 3px 12px #0005;
+  }
+
+  #${worldId} .fw40-island-wrap {
+    position: relative;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 22px 10px 27px;
+  }
+
+  #${worldId} .fw40-island {
+    position: relative;
+    padding: 22px 13px 25px;
+    border: 2px solid #b8e9ff;
+    border-radius: 35px;
+    background:
+      radial-gradient(ellipse at 50% 0%,#c7ffe955,transparent 58%),
+      linear-gradient(145deg,#72d5bd,#3d9d91 52%,#286b79);
+    box-shadow:
+      0 13px 0 #173f65,
+      0 23px 35px #06133888,
+      inset 0 3px 8px #ffffff77;
+    transform: perspective(900px) rotateX(2deg);
+  }
+
+  #${worldId} .fw40-island:before {
     content: "";
     position: absolute;
-    left: 7%;
-    right: 7%;
-    bottom: 8px;
-    height: 13px;
-    border-radius: 50%;
-    background: #0c1746;
-    filter: blur(7px);
-    opacity: .7;
+    inset: 10px;
+    border: 1px dashed #ffffff70;
+    border-radius: 27px;
+    pointer-events: none;
   }
 
-  #${worldId} .fw-buildings {
+  #${worldId} .fw40-island:after {
+    content: "✦";
+    position: absolute;
+    top: -18px;
+    right: 13%;
+    color: #fff2a8;
+    font-size: 29px;
+    text-shadow: 0 0 15px #fff;
+    animation: fw40Sparkle 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes fw40Sparkle {
+    from { transform: scale(.8) rotate(0); opacity: .55; }
+    to { transform: scale(1.2) rotate(25deg); opacity: 1; }
+  }
+
+  /* BUILDINGS */
+
+  #${worldId} .fw40-buildings {
     position: relative;
+    z-index: 2;
     display: grid;
     grid-template-columns: repeat(2,minmax(0,1fr));
-    gap: 13px;
+    gap: 19px 13px;
   }
 
-  #${worldId} .fw-building {
+  #${worldId} .fw40-building {
     position: relative;
     min-width: 0;
-    min-height: 170px;
+    min-height: 184px;
     padding: 13px 7px 12px;
     overflow: hidden;
     border: 2px solid #ffffff;
-    border-radius: 21px;
-    color: #24325e;
-    background: linear-gradient(150deg,#ffffff,#e9eaff);
-    box-shadow: 0 8px 0 #101b4d88,0 12px 22px #080f3455;
+    border-radius: 23px;
+    color: #26345d;
+    background: linear-gradient(150deg,#fff,#e9efff);
+    box-shadow:
+      0 8px 0 #233b65,
+      0 13px 19px #07183e55;
     font-family: inherit;
+    text-align: center;
     cursor: pointer;
-    transition: transform .2s ease,filter .2s ease;
+    transition: transform .2s ease, box-shadow .2s ease;
     -webkit-tap-highlight-color: transparent;
   }
 
-  #${worldId} .fw-building:active {
-    transform: translateY(5px) scale(.98);
-  }
-
-  #${worldId} .fw-building:focus-visible {
-    outline: 3px solid #ffe58d;
-    outline-offset: 3px;
-  }
-
-  #${worldId} .fw-building:before {
+  #${worldId} .fw40-building:before {
     content: "";
     position: absolute;
-    top: -35px;
-    right: -25px;
-    width: 95px;
-    height: 95px;
+    top: -37px;
+    right: -23px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     background: var(--fw-light);
-    opacity: .8;
+    opacity: .9;
   }
 
-  #${worldId} .fw-building-top {
+  #${worldId} .fw40-building:after {
+    content: "";
+    position: absolute;
+    left: -25px;
+    bottom: -34px;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--fw-light);
+    opacity: .65;
+  }
+
+  #${worldId} .fw40-building:active {
+    transform: translateY(5px) scale(.98);
+    box-shadow: 0 3px 0 #233b65,0 6px 12px #07183e55;
+  }
+
+  #${worldId} .fw40-building:focus-visible {
+    outline: 3px solid #ffe58d;
+    outline-offset: 4px;
+  }
+
+  #${worldId} .fw40-building-top {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 8px;
+    height: 9px;
     background: var(--fw-color);
   }
 
-  #${worldId} .fw-building-icon {
+  #${worldId} .fw40-building-icon {
     position: relative;
+    z-index: 1;
     display: flex;
-    width: 76px;
-    height: 76px;
-    margin: 7px auto 9px;
+    width: 79px;
+    height: 79px;
+    margin: 7px auto 10px;
     align-items: center;
     justify-content: center;
-    border-radius: 23px;
-    font-size: 43px;
-    background: var(--fw-light);
-    box-shadow: inset 0 -6px #0000000c,0 6px 12px #00000015;
-    animation: fwBuildingFloat 3s ease-in-out infinite;
+    border: 2px solid #ffffff;
+    border-radius: 25px;
+    background: linear-gradient(145deg,var(--fw-light),#ffffff);
+    box-shadow:
+      0 7px 0 #00000018,
+      0 11px 16px #00000018,
+      inset 0 2px 5px #ffffff;
+    font-size: 44px;
+    animation: fw40BuildingFloat 3s ease-in-out infinite;
   }
 
-  #${worldId} .fw-building:nth-child(even) .fw-building-icon {
+  #${worldId} .fw40-building:nth-child(even) .fw40-building-icon {
     animation-delay: .6s;
   }
 
-  @keyframes fwBuildingFloat {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
+  @keyframes fw40BuildingFloat {
+    0%,100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-6px) rotate(2deg); }
   }
 
-  #${worldId} .fw-building strong {
+  #${worldId} .fw40-building strong {
     position: relative;
+    z-index: 1;
     display: block;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 1000;
   }
 
-  #${worldId} .fw-building small {
+  #${worldId} .fw40-building small {
     position: relative;
+    z-index: 1;
     display: block;
     margin-top: 5px;
     color: #66718e;
     font-size: 10px;
   }
 
-  #${worldId} .fw-status {
+  #${worldId} .fw40-status {
     position: relative;
+    z-index: 1;
     display: inline-block;
-    margin-top: 8px;
-    padding: 4px 9px;
+    margin-top: 9px;
+    padding: 5px 10px;
     border-radius: 20px;
-    color: #5b6681;
+    color: #56617d;
     background: #e8edf8;
     font-size: 10px;
-    font-weight: 900;
+    font-weight: 1000;
   }
 
-  #${worldId} .fw-building.done {
+  #${worldId} .fw40-building.done {
     border-color: #ffe18a;
     background: linear-gradient(145deg,#fff8d8,#fff);
   }
 
-  #${worldId} .fw-building.done .fw-status {
+  #${worldId} .fw40-building.done .fw40-status {
     color: #176f54;
     background: #c8f6df;
   }
 
-  #${worldId} .fw-building.final {
+  #${worldId} .fw40-building.final {
     grid-column: 1 / -1;
-    min-height: 160px;
+    min-height: 175px;
     background: linear-gradient(145deg,#fff0f6,#fff);
     border-color: #ffb9d4;
   }
 
-  #${worldId} .fw-building.final .fw-building-icon {
-    width: 70px;
-    height: 70px;
+  #${worldId} .fw40-building.final .fw40-building-icon {
+    width: 76px;
+    height: 76px;
   }
 
-  #${worldId} .fw-building.final.locked {
+  #${worldId} .fw40-building.final.ready {
+    border-color: #ffe17c;
+    box-shadow:
+      0 0 0 3px #ffd36d,
+      0 8px 0 #9e4b7b,
+      0 0 27px #ffcf6d99;
+    animation: fw40FinalGlow 1.8s ease-in-out infinite alternate;
+  }
+
+  #${worldId} .fw40-building.final.locked {
     filter: saturate(.65);
   }
 
-  #${worldId} .fw-building.final.ready {
-    box-shadow: 0 0 0 3px #ffd36d,0 8px 0 #9e4b7b,0 0 28px #ffcf6d99;
-    animation: fwFinalGlow 1.8s ease-in-out infinite alternate;
+  @keyframes fw40FinalGlow {
+    from {
+      box-shadow: 0 0 0 2px #ffd36d,0 8px 0 #9e4b7b,0 0 12px #ffcf6d55;
+    }
+    to {
+      box-shadow: 0 0 0 4px #fff0a8,0 8px 0 #9e4b7b,0 0 28px #ffcf6d;
+    }
   }
 
-  @keyframes fwFinalGlow {
-    from { box-shadow: 0 0 0 2px #ffd36d,0 8px 0 #9e4b7b,0 0 12px #ffcf6d55; }
-    to { box-shadow: 0 0 0 4px #fff0a8,0 8px 0 #9e4b7b,0 0 28px #ffcf6d; }
-  }
+  /* FOOTER */
 
-  #${worldId} .fw-footer {
+  #${worldId} .fw40-footer {
     max-width: 650px;
-    margin: 18px auto 0;
-    text-align: center;
-    color: #dbe7ff;
+    margin: 24px auto 0;
+    color: #e0eaff;
     font-size: 12px;
-    line-height: 2;
+    line-height: 2.2;
+    text-align: center;
   }
 
-  #${worldId} .fw-close {
+  #${worldId} .fw40-footer strong {
+    color: #ffe49a;
+  }
+
+  #${worldId} .fw40-close {
     display: block;
-    margin: 18px auto 5px;
-    border: 2px solid #ffffff;
-    border-radius: 16px;
-    padding: 12px 25px;
+    margin: 18px auto 7px;
+    padding: 13px 25px;
+    border: 2px solid #fff;
+    border-radius: 17px;
     color: #fff;
-    background: linear-gradient(135deg,#8154ed,#263b91);
-    box-shadow: 0 5px 0 #101a4d;
+    background: linear-gradient(135deg,#9561f0,#30449b);
+    box-shadow: 0 6px 0 #101a4d;
     font-family: inherit;
-    font-weight: 900;
+    font-size: 13px;
+    font-weight: 1000;
     cursor: pointer;
   }
 
-  #${worldId} .fw-toast {
+  /* MESSAGE */
+
+  #${worldId} .fw40-toast {
     position: fixed;
     z-index: 10002;
     left: 50%;
@@ -608,16 +762,18 @@
     width: max-content;
     max-width: 88%;
     transform: translateX(-50%);
-    padding: 12px 17px;
-    border: 1px solid #ffffff55;
-    border-radius: 15px;
-    color: white;
+    padding: 13px 17px;
+    border: 1px solid #ffffff66;
+    border-radius: 16px;
+    color: #fff;
     background: #182b68;
-    box-shadow: 0 8px 24px #0005;
+    box-shadow: 0 8px 24px #0006;
     text-align: center;
     font-size: 13px;
-    font-weight: bold;
+    font-weight: 900;
   }
+
+  /* SMALL SCREENS */
 
   @media(max-width:370px) {
     #${worldId} {
@@ -625,29 +781,36 @@
       padding-right: 8px;
     }
 
-    #${worldId} .fw-buildings {
-      gap: 8px;
+    #${worldId} .fw40-buildings {
+      gap: 12px 8px;
     }
 
-    #${worldId} .fw-building {
-      min-height: 155px;
+    #${worldId} .fw40-building {
+      min-height: 165px;
+      padding-left: 5px;
+      padding-right: 5px;
     }
 
-    #${worldId} .fw-building-icon {
-      width: 65px;
-      height: 65px;
-      font-size: 37px;
+    #${worldId} .fw40-building-icon {
+      width: 67px;
+      height: 67px;
+      font-size: 38px;
     }
 
-    #${worldId} .fw-hero {
-      gap: 8px;
+    #${worldId} .fw40-hero {
+      gap: 7px;
     }
 
-    #${worldId} .fw-avatar {
-      flex-basis: 57px;
-      width: 57px;
-      height: 57px;
-      font-size: 35px;
+    #${worldId} .fw40-avatar {
+      flex-basis: 55px;
+      width: 55px;
+      height: 55px;
+      font-size: 34px;
+    }
+
+    #${worldId} .fw40-avatar-change {
+      padding: 8px 7px;
+      font-size: 10px;
     }
   }
 
@@ -669,9 +832,12 @@
   launcher.id = launcherId;
   launcher.type = "button";
   launcher.textContent = "✨ ورود به دنیای اندیشا";
-  launcher.setAttribute("aria-label", "ورود به دنیای فانتزی اندیشا");
+  launcher.setAttribute(
+    "aria-label",
+    "ورود به دنیای فانتزی اندیشا"
+  );
 
-  /* ---------- World container ---------- */
+  /* ---------- World ---------- */
 
   const world = document.createElement("div");
   world.id = worldId;
@@ -680,77 +846,98 @@
   world.setAttribute("aria-modal", "true");
 
   world.innerHTML = `
-    <div class="fw-stars"></div>
-    <div class="fw-orb"></div>
+    <div class="fw40-sky" aria-hidden="true">
+      <div class="fw40-stars"></div>
+      <div class="fw40-moon"></div>
+      <div class="fw40-cloud one"></div>
+      <div class="fw40-cloud two"></div>
+    </div>
 
-    <header class="fw-header">
-      <div class="fw-logo">ANDISHA • FANTASY WORLD</div>
-      <h1 class="fw-title">شهر افسانه‌ای اندیشا</h1>
-      <p class="fw-subtitle">ماجراجویی بزرگ اعداد و قهرمانان ✨</p>
+    <header class="fw40-header">
+      <div class="fw40-logo">ANDISHA • FANTASY WORLD</div>
+      <h1 class="fw40-title">شهر افسانه‌ای اندیشا</h1>
+      <p class="fw40-subtitle">
+        سرزمین جادویی اعداد؛ ماجراجویی قهرمانان ✨
+      </p>
     </header>
 
-    <section class="fw-hero">
-      <div class="fw-avatar" id="fw-avatar">🧑‍🚀</div>
-      <div class="fw-hero-info">
+    <section class="fw40-hero">
+      <div class="fw40-avatar" id="fw40-avatar">🧑‍🚀</div>
+
+      <div class="fw40-hero-info">
         <strong>قهرمان اندیشا</strong>
         <small>آماده‌ای رازهای شهر را کشف کنی؟</small>
       </div>
-      <button class="fw-avatar-change" type="button" id="fw-avatar-change">
+
+      <button
+        class="fw40-avatar-change"
+        type="button"
+        id="fw40-avatar-change"
+      >
         تغییر قهرمان
       </button>
     </section>
 
-    <section class="fw-stats">
-      <div class="fw-stat">
-        <b id="fw-score">۰</b>
+    <section class="fw40-stats">
+      <div class="fw40-stat">
+        <b id="fw40-score">۰</b>
         <small>امتیاز</small>
       </div>
-      <div class="fw-stat">
-        <b id="fw-completed">۰/۵</b>
+
+      <div class="fw40-stat">
+        <b id="fw40-completed">۰/۵</b>
         <small>مأموریت کامل</small>
       </div>
-      <div class="fw-stat">
-        <b id="fw-medals">۰</b>
+
+      <div class="fw40-stat">
+        <b id="fw40-medals">۰</b>
         <small>نشان افتخار</small>
       </div>
     </section>
 
-    <section class="fw-progress">
-      <div class="fw-progress-head">
-        <span>مسیر قهرمانی تو</span>
-        <span id="fw-percent">۰٪</span>
+    <section class="fw40-progress">
+      <div class="fw40-progress-head">
+        <span>⭐ مسیر قهرمانی تو</span>
+        <span id="fw40-percent">۰٪</span>
       </div>
-      <div class="fw-progress-track">
-        <div class="fw-progress-fill" id="fw-progress-fill"></div>
+
+      <div class="fw40-track">
+        <div class="fw40-fill" id="fw40-fill"></div>
       </div>
     </section>
 
-    <h2 class="fw-section-title">🗺️ سرزمین مأموریت‌ها</h2>
+    <h2 class="fw40-section-title">
+      🗺️ جزیره مأموریت‌های اندیشا
+    </h2>
 
-    <section class="fw-island">
-      <div class="fw-buildings" id="fw-buildings"></div>
+    <section class="fw40-island-wrap">
+      <div class="fw40-island">
+        <div class="fw40-buildings" id="fw40-buildings"></div>
+      </div>
     </section>
 
-    <div class="fw-footer">
-      ⭐ هر مأموریت، یک قدم تا قهرمانی!
+    <div class="fw40-footer">
+      ✨ هر مأموریت، یک قدم تا قهرمانی!
       <br>
-      طراحی و توسعه: اندیشا
+      <strong>طراحی و توسعه: اندیشا</strong>
     </div>
 
-    <button class="fw-close" type="button" id="fw-close">
-      بازگشت به بازی اصلی
+    <button class="fw40-close" type="button" id="fw40-close">
+      ↩ بازگشت به بازی اصلی
     </button>
   `;
 
-  const buildingContainer = world.querySelector("#fw-buildings");
+  const buildingContainer = world.querySelector("#fw40-buildings");
 
-  /* ---------- Building creation ---------- */
+  /* ---------- Create buildings ---------- */
 
   zones.forEach(function (zone, index) {
 
     const button = document.createElement("button");
+
     button.type = "button";
-    button.className = "fw-building";
+    button.className = "fw40-building";
+    button.dataset.zoneIndex = String(index);
 
     if (index === 4) {
       button.classList.add("final");
@@ -760,11 +947,11 @@
     button.style.setProperty("--fw-light", zone.light);
 
     button.innerHTML =
-      '<span class="fw-building-top"></span>' +
-      '<span class="fw-building-icon">' + zone.icon + '</span>' +
+      '<span class="fw40-building-top"></span>' +
+      '<span class="fw40-building-icon">' + zone.icon + '</span>' +
       '<strong>' + zone.name + '</strong>' +
       '<small>' + zone.desc + '</small>' +
-      '<span class="fw-status">در انتظار مأموریت</span>';
+      '<span class="fw40-status">✨ آماده ماجراجویی</span>';
 
     button.addEventListener("click", function () {
       enterZone(index);
@@ -774,7 +961,7 @@
 
   });
 
-  /* ---------- Refresh visual progress ---------- */
+  /* ---------- Refresh ---------- */
 
   function refreshWorld() {
 
@@ -782,29 +969,29 @@
     const score = getScore();
     const percent = Math.round(completed / zones.length * 100);
 
-    world.querySelector("#fw-score").textContent =
+    world.querySelector("#fw40-score").textContent =
       String(score);
 
-    world.querySelector("#fw-completed").textContent =
+    world.querySelector("#fw40-completed").textContent =
       completed + "/5";
 
-    world.querySelector("#fw-medals").textContent =
-      completed;
+    world.querySelector("#fw40-medals").textContent =
+      String(completed);
 
-    world.querySelector("#fw-percent").textContent =
+    world.querySelector("#fw40-percent").textContent =
       percent + "٪";
 
-    world.querySelector("#fw-progress-fill").style.width =
+    world.querySelector("#fw40-fill").style.width =
       percent + "%";
 
     const buttons = buildingContainer.querySelectorAll(
-      ".fw-building"
+      ".fw40-building"
     );
 
     buttons.forEach(function (button, index) {
 
       const done = isCompleted(index);
-      const status = button.querySelector(".fw-status");
+      const status = button.querySelector(".fw40-status");
 
       button.classList.toggle("done", done);
 
@@ -816,40 +1003,31 @@
 
       if (index === 4) {
 
-        button.classList.toggle(
-          "ready",
-          completed >= 4
-        );
-
-        button.classList.toggle(
-          "locked",
-          completed < 4
-        );
+        button.classList.toggle("ready", completed >= 4);
+        button.classList.toggle("locked", completed < 4);
 
         if (completed >= 4) {
           status.textContent = "🌟 دروازه قهرمانی آماده است";
         } else {
-          status.textContent =
-            "🔒 ابتدا چهار مأموریت دیگر را کامل کن";
+          status.textContent = "🔒 ابتدا چهار مأموریت دیگر را کامل کن";
         }
 
       }
 
     });
 
-    world.querySelector("#fw-avatar").textContent =
+    world.querySelector("#fw40-avatar").textContent =
       avatars[getAvatar()];
 
   }
 
-  /* ---------- Avatar selection ---------- */
+  /* ---------- Avatar ---------- */
 
   function changeAvatar() {
 
     const next = (getAvatar() + 1) % avatars.length;
 
     saveAvatar(next);
-
     refreshWorld();
 
     showMessage("قهرمان جدیدت انتخاب شد! " + avatars[next]);
@@ -862,11 +1040,11 @@
 
   function showMessage(message) {
 
-    let toast = world.querySelector(".fw-toast");
+    let toast = world.querySelector(".fw40-toast");
 
     if (!toast) {
       toast = document.createElement("div");
-      toast.className = "fw-toast";
+      toast.className = "fw40-toast";
       toast.setAttribute("role", "status");
       world.appendChild(toast);
     }
@@ -880,23 +1058,26 @@
 
     toastTimer = window.setTimeout(function () {
       toast.style.display = "none";
-    }, 2500);
+    }, 2600);
 
   }
 
-  /* ---------- Open and close ---------- */
+  /* ---------- Open / Close ---------- */
 
   let previousOverflow = "";
+  let previousFocus = null;
 
   function openWorld() {
 
+    previousFocus = document.activeElement;
     previousOverflow = document.body.style.overflow;
 
     refreshWorld();
 
     world.classList.add("open");
-
     document.body.style.overflow = "hidden";
+
+    world.querySelector("#fw40-close").focus();
 
   }
 
@@ -905,6 +1086,13 @@
     world.classList.remove("open");
 
     document.body.style.overflow = previousOverflow;
+
+    if (
+      previousFocus &&
+      typeof previousFocus.focus === "function"
+    ) {
+      previousFocus.focus();
+    }
 
   }
 
@@ -941,7 +1129,7 @@
 
   }
 
-  /* ---------- Enter a mission ---------- */
+  /* ---------- Enter mission ---------- */
 
   function enterZone(index) {
 
@@ -953,12 +1141,6 @@
       showMessage("این مأموریت پیدا نشد.");
       return;
     }
-
-    /*
-      برج در بازی اصلی قفل آموزشی جداگانه ندارد.
-      اینجا فقط راهنمایی تصویری ارائه می‌شود.
-      منطق واقعی بازی تغییر نمی‌کند.
-    */
 
     if (index === 4 && getProgress() < 4) {
       showMessage(
@@ -995,6 +1177,8 @@
         return;
       }
 
+      openWorld();
+
       showMessage(
         "اتصال مرحله اصلی پیدا نشد. بازی اصلی را بررسی کن."
       );
@@ -1003,6 +1187,7 @@
 
       console.error("ANDISHA FANTASY CONNECTION ERROR:", error);
 
+      openWorld();
       showMessage("ورود به مأموریت با خطا روبه‌رو شد.");
 
     }
@@ -1013,12 +1198,12 @@
 
   launcher.addEventListener("click", openWorld);
 
-  world.querySelector("#fw-close").addEventListener(
+  world.querySelector("#fw40-close").addEventListener(
     "click",
     closeWorld
   );
 
-  world.querySelector("#fw-avatar-change").addEventListener(
+  world.querySelector("#fw40-avatar-change").addEventListener(
     "click",
     changeAvatar
   );
@@ -1034,24 +1219,12 @@
 
   });
 
-  /* ---------- Progress refresh events ---------- */
+  /* ---------- Live progress refresh ---------- */
 
-  // تغییر اطلاعات از تب یا پنجره دیگر
-  window.addEventListener("storage", function () {
-    refreshWorld();
-  });
+  window.addEventListener("storage", refreshWorld);
+  window.addEventListener("focus", refreshWorld);
+  window.addEventListener("pageshow", refreshWorld);
 
-  // بازگشت دوباره به صفحه
-  window.addEventListener("focus", function () {
-    refreshWorld();
-  });
-
-  // بارگذاری مجدد یا بازگشت از صفحه دیگر
-  window.addEventListener("pageshow", function () {
-    refreshWorld();
-  });
-
-  // بازگشت به برنامه پس از رفتن به پس‌زمینه
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden) {
       refreshWorld();
@@ -1070,6 +1243,6 @@
   window.andishaEnterCityZone = enterZone;
   window.andishaRefreshFantasyWorld = refreshWorld;
 
-  console.log("ANDISHA FANTASY WORLD V3.1 READY");
+  console.log("ANDISHA FANTASY WORLD V4.0 READY");
 
 })();
