@@ -2,21 +2,19 @@
 "use strict";
 
 /* =========================================================
-   ANDISHA CITY LIFE V5.3
-   Correct Hero Position
+   ANDISHA CITY LIFE V5.4
+   Responsive Hero + Accurate Building Detection
    Compatible with Fantasy World V4.0
-   Independent movement and building interaction
    ========================================================= */
 
 (function () {
 
-  if (window.__ANDISHA_CITY_LIFE_V53__) return;
-  window.__ANDISHA_CITY_LIFE_V53__ = true;
+  if (window.__ANDISHA_CITY_LIFE_V54__) return;
 
   const world = document.getElementById("andisha-fantasy-world");
 
   if (!world) {
-    console.warn("ANDISHA V5.3: World not found.");
+    console.warn("ANDISHA V5.4: World not found.");
     return;
   }
 
@@ -24,20 +22,20 @@
   const buildingsArea = world.querySelector(".fw40-buildings");
 
   if (!island || !buildingsArea) {
-    console.warn("ANDISHA V5.3: Buildings area not found.");
+    console.warn("ANDISHA V5.4: Buildings area not found.");
     return;
   }
 
   const buildings = Array.from(
-    buildingsArea.querySelectorAll(
-      ".fw40-building[data-zone-index]"
-    )
+    buildingsArea.querySelectorAll(".fw40-building[data-zone-index]")
   );
 
   if (buildings.length !== 5) {
-    console.warn("ANDISHA V5.3: Expected five buildings.");
+    console.warn("ANDISHA V5.4: Five buildings required.");
     return;
   }
+
+  window.__ANDISHA_CITY_LIFE_V54__ = true;
 
   const names = [
     "فروشگاه جادویی",
@@ -58,10 +56,10 @@
   const avatars = ["🧑‍🚀", "🧙‍♂️", "🦸", "🧝‍♀️", "👩‍🚀"];
 
   const STEP = 2.8;
-  const NEAR_DISTANCE = 125;
+  const NEAR_DISTANCE = 65;
 
   let x = 50;
-  let y = 90;
+  let y = 88;
   let currentBuilding = null;
   let moveTimer = null;
 
@@ -71,6 +69,7 @@
     "andisha-city-life-v51-style",
     "andisha-city-life-v52-style",
     "andisha-city-life-v53-style",
+    "andisha-city-life-v54-style",
     "andisha-city-hero-v51",
     "andisha-city-controls-v51",
     "andisha-city-nearby-v51",
@@ -83,19 +82,20 @@
   /* ---------- Styles ---------- */
 
   const style = document.createElement("style");
-  style.id = "andisha-city-life-v53-style";
+  style.id = "andisha-city-life-v54-style";
 
   style.textContent = `
 
     #andisha-fantasy-world .fw40-buildings {
-      position: relative;
+      position: relative !important;
+      overflow: visible !important;
     }
 
     #andisha-city-hero-v51 {
       position: absolute;
-      z-index: 12;
+      z-index: 20;
       left: 50%;
-      top: 90%;
+      top: 88%;
       width: 52px;
       height: 60px;
       display: flex;
@@ -107,10 +107,10 @@
       transform: translate(-50%, -50%);
       filter: drop-shadow(0 6px 4px #102d4666);
       transition: left .12s linear, top .12s linear;
-      animation: andishaHeroFloat53 1.5s ease-in-out infinite;
+      animation: andishaHeroFloat54 1.5s ease-in-out infinite;
     }
 
-    @keyframes andishaHeroFloat53 {
+    @keyframes andishaHeroFloat54 {
       0%,100% { margin-top: 0; }
       50% { margin-top: -5px; }
     }
@@ -119,12 +119,14 @@
       position: relative;
       z-index: 25;
       width: 100%;
-      min-height: 54px;
+      min-height: 58px;
+      box-sizing: border-box;
       margin: 18px auto 10px;
-      padding: 7px 10px;
+      padding: 8px 10px;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-wrap: wrap;
       gap: 9px;
       border: 2px solid #fff;
       border-radius: 16px;
@@ -136,12 +138,14 @@
       font-weight: 900;
       visibility: hidden;
       opacity: 0;
+      pointer-events: none;
       transition: opacity .2s ease;
     }
 
     #andisha-city-nearby-v51.show {
       visibility: visible;
       opacity: 1;
+      pointer-events: auto;
     }
 
     #andisha-city-nearby-v51 button {
@@ -153,7 +157,7 @@
       background: linear-gradient(135deg,#1aaf83,#08775f);
       font-family: inherit;
       font-size: 12px;
-      font-weight: 1000;
+      font-weight: 900;
       cursor: pointer;
     }
 
@@ -161,18 +165,21 @@
       position: relative;
       z-index: 25;
       width: max-content;
-      margin: 8px auto 5px;
+      margin: 10px auto 8px;
       display: grid;
       grid-template-columns: repeat(3,43px);
       grid-template-rows: repeat(2,43px);
       gap: 5px;
       direction: ltr;
       touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     #andisha-city-controls-v51 button {
       width: 43px;
       height: 43px;
+      padding: 0;
       border: 2px solid #fff;
       border-radius: 13px;
       color: #fff;
@@ -240,11 +247,11 @@
 
   document.head.appendChild(style);
 
-  /* ---------- Hero: inside buildings area ---------- */
+  /* ---------- Hero ---------- */
 
   const hero = document.createElement("div");
   hero.id = "andisha-city-hero-v51";
-  hero.textContent = "🧑‍🚀";
+  hero.textContent = avatars[0];
   hero.setAttribute("aria-label", "قهرمان اندیشا");
 
   buildingsArea.appendChild(hero);
@@ -259,15 +266,17 @@
   const info = document.createElement("div");
   info.id = "andisha-city-nearby-v51";
 
-  info.innerHTML = `
-    <span id="andisha-city-nearby-name-v51">
-      به یک ساختمان نزدیک شو
-    </span>
-    <button type="button" id="andisha-city-enter-v51">
-      ورود ✨
-    </button>
-  `;
+  const nearbyName = document.createElement("span");
+  nearbyName.id = "andisha-city-nearby-name-v51";
+  nearbyName.textContent = "به یک ساختمان نزدیک شو";
 
+  const enterButton = document.createElement("button");
+  enterButton.type = "button";
+  enterButton.id = "andisha-city-enter-v51";
+  enterButton.textContent = "ورود ✨";
+
+  info.appendChild(nearbyName);
+  info.appendChild(enterButton);
   island.appendChild(info);
 
   /* ---------- Movement controls ---------- */
@@ -324,10 +333,7 @@
 
     const index = Number(building.dataset.zoneIndex);
 
-    world.querySelector(
-      "#andisha-city-nearby-name-v51"
-    ).textContent = "✨ " + names[index];
-
+    nearbyName.textContent = "✨ " + names[index];
     info.classList.add("show");
   }
 
@@ -353,11 +359,18 @@
     buildings.forEach(function (building) {
       const rect = building.getBoundingClientRect();
 
-      const bx = rect.left + rect.width / 2;
-      const by = rect.top + rect.height / 2;
+      const closestX = Math.max(
+        rect.left,
+        Math.min(hx, rect.right)
+      );
 
-      const dx = bx - hx;
-      const dy = by - hy;
+      const closestY = Math.max(
+        rect.top,
+        Math.min(hy, rect.bottom)
+      );
+
+      const dx = closestX - hx;
+      const dy = closestY - hy;
 
       const distance = Math.sqrt(dx * dx + dy * dy);
 
@@ -384,15 +397,15 @@
     if (direction === "left") x -= STEP;
     if (direction === "right") x += STEP;
 
-    x = Math.max(5, Math.min(95, x));
-    y = Math.max(4, Math.min(96, y));
+    x = Math.max(4, Math.min(96, x));
+    y = Math.max(3, Math.min(97, y));
 
     updateHero();
     checkNearby();
   }
 
   function stopMoving() {
-    if (moveTimer) {
+    if (moveTimer !== null) {
       clearInterval(moveTimer);
       moveTimer = null;
     }
@@ -405,6 +418,8 @@
       button.addEventListener("pointerdown", function (event) {
         event.preventDefault();
 
+        if (!isWorldOpen()) return;
+
         stopMoving();
         move(direction);
 
@@ -416,10 +431,12 @@
       button.addEventListener("pointerup", stopMoving);
       button.addEventListener("pointercancel", stopMoving);
       button.addEventListener("pointerleave", stopMoving);
+      button.addEventListener("lostpointercapture", stopMoving);
     }
   );
 
   window.addEventListener("pointerup", stopMoving);
+  window.addEventListener("pointercancel", stopMoving);
   window.addEventListener("blur", stopMoving);
 
   /* ---------- Keyboard ---------- */
@@ -430,7 +447,13 @@
     const target = event.target;
     const tag = target && target.tagName;
 
-    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    if (
+      tag === "INPUT" ||
+      tag === "TEXTAREA" ||
+      (target && target.isContentEditable)
+    ) {
+      return;
+    }
 
     const keys = {
       ArrowUp: "up",
@@ -450,7 +473,7 @@
   /* ---------- Enter mission ---------- */
 
   function enterBuilding() {
-    if (!currentBuilding) return;
+    if (!currentBuilding || !isWorldOpen()) return;
 
     const index = Number(currentBuilding.dataset.zoneIndex);
 
@@ -459,10 +482,8 @@
     }
 
     if (index === 4 && getProgress() < 4) {
-      world.querySelector(
-        "#andisha-city-nearby-name-v51"
-      ).textContent = "🔒 ابتدا چهار مأموریت دیگر را کامل کن";
-
+      nearbyName.textContent =
+        "🔒 ابتدا چهار مأموریت دیگر را کامل کن";
       return;
     }
 
@@ -481,10 +502,27 @@
     buildings[index].click();
   }
 
-  info.querySelector("#andisha-city-enter-v51").addEventListener(
-    "click",
-    enterBuilding
-  );
+  enterButton.addEventListener("click", enterBuilding);
+
+  /* ---------- Avatar ---------- */
+
+  function refreshAvatar() {
+    try {
+      const saved = localStorage.getItem("andishaFantasyAvatar");
+      const avatarIndex = Number(saved);
+
+      if (
+        saved !== null &&
+        Number.isInteger(avatarIndex) &&
+        avatarIndex >= 0 &&
+        avatarIndex < avatars.length
+      ) {
+        hero.textContent = avatars[avatarIndex];
+      }
+    } catch (error) {
+      // Keep current avatar.
+    }
+  }
 
   /* ---------- Refresh ---------- */
 
@@ -495,22 +533,7 @@
       return;
     }
 
-    try {
-      const avatarIndex = Number(
-        localStorage.getItem("andishaFantasyAvatar")
-      );
-
-      if (
-        Number.isInteger(avatarIndex) &&
-        avatarIndex >= 0 &&
-        avatarIndex < avatars.length
-      ) {
-        hero.textContent = avatars[avatarIndex];
-      }
-    } catch (error) {
-      // Keep default avatar.
-    }
-
+    refreshAvatar();
     updateHero();
     checkNearby();
   }
@@ -518,17 +541,25 @@
   window.addEventListener("storage", refresh);
   window.addEventListener("focus", refresh);
   window.addEventListener("pageshow", refresh);
+  window.addEventListener("resize", checkNearby);
 
   const avatarButton = world.querySelector("#fw40-avatar-change");
 
   if (avatarButton) {
     avatarButton.addEventListener("click", function () {
-      window.setTimeout(refresh, 0);
+      window.setTimeout(refreshAvatar, 50);
     });
   }
 
+  /* ---------- World observer ---------- */
+
   const observer = new MutationObserver(function () {
-    if (isWorldOpen()) refresh();
+    if (isWorldOpen()) {
+      refresh();
+    } else {
+      stopMoving();
+      hideNearby();
+    }
   });
 
   observer.observe(world, {
@@ -542,13 +573,13 @@
 
   window.andishaCityLifeResetPosition = function () {
     x = 50;
-    y = 90;
+    y = 88;
     updateHero();
     checkNearby();
   };
 
   updateHero();
 
-  console.log("ANDISHA CITY LIFE V5.3 READY");
+  console.log("ANDISHA CITY LIFE V5.4 READY");
 
 })();
