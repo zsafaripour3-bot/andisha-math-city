@@ -1,17 +1,22 @@
+
 "use strict";
 
 /* ============================================
-   ANDISHA VOICE SYSTEM V3
-   SINGLE AUDIO CONTROL
-   جلوگیری از تداخل و اکو
+   ANDISHA VOICE SYSTEM V4
+   کنترل یکپارچه صدای راهنما
+   جلوگیری از پخش هم‌زمان و اجرای تکراری
    ============================================ */
 
 (function () {
+  if (window.__ANDISHA_VOICES_V4__) return;
+  window.__ANDISHA_VOICES_V4__ = true;
 
-  if (window.__ANDISHA_VOICES_V3__) return;
-  window.__ANDISHA_VOICES_V3__ = true;
+  const audio = new Audio();
+  audio.preload = "none";
+  audio.loop = false;
+  audio.volume = 1;
 
-  const audioFiles = {
+  const files = {
     welcome: "welcome.mp3",
     shop: "shop.mp3",
     kitchen: "kitchen.mp3",
@@ -29,284 +34,227 @@
     "tower"
   ];
 
-  const audio = new Audio();
-
-  audio.preload = "none";
-  audio.loop = false;
-
+  let sessionToken = 0;
   let currentVoice = "";
   let voiceSessionActive = false;
   let welcomePlayed = false;
+  let victoryPlayed = false;
+  let lastZone = -1;
 
-  function setStatus(message) {
-    const status = document.getElementById(
-      "andishaVoiceStatus"
-    );
-
-    if (status) status.textContent = message;
+  function getCoordinator() {
+    return window.andishaAudioCoordinator || null;
   }
 
-  // پایان یکپارچه صدای راهنما
-  function finishVoice(message) {
-
-    if (!currentVoice && !voiceSessionActive) return;
-
-    currentVoice = "";
-
-    if (voiceSessionActive) {
-
-      voiceSessionActive = false;
-
-      const coordinator = window.andishaAudioCoordinator;
-
-      if (
-        coordinator &&
-        typeof coordinator.afterVoice === "function"
-      ) {
-        coordinator.afterVoice();
-      }
-    }
-
-    setStatus(message || "پخش صدا پایان یافت. 🌟");
-  }
-
-  // توقف صدای قبلی
-  function stopVoice(notifyCoordinator) {
-
+  function stopAudioSource() {
     audio.pause();
 
     try {
       audio.currentTime = 0;
-    } catch (error) {}
+    } catch (e) {}
 
     audio.removeAttribute("src");
-    audio.load();
 
+    try {
+      audio.load();
+    } catch (e) {}
+  }
+
+  function stopVoice(notifyCoordinator) {
+    const hadVoice = voiceSessionActive;
+
+    sessionToken++;
     currentVoice = "";
+    voiceSessionActive = false;
 
-    if (
-      notifyCoordinator !== false &&
-      voiceSessionActive
-    ) {
-      finishVoice("صدای راهنما متوقف شد.");
+    stopAudioSource();
+
+    if (notifyCoordinator && hadVoice) {
+      const coordinator = getCoordinator();
+
+      if (coordinator && typeof coordinator.afterVoice === "function") {
+        coordinator.afterVoice();
+      }
     }
   }
 
-  // پخش صدای جدید
-  function playVoice(name) {
+  function finishVoice(token) {
+    if (token !== sessionToken) return;
+    if (!voiceSessionActive) return;
 
-    const filename = audioFiles[name];
+    currentVoice = "";
+    voiceSessionActive = false;
 
-    if (!filename) {
-      console.warn("فایل صوتی نامعتبر:", name);
-      return;
+    stopAudioSource();
+
+    const coordinator = getCoordinator();
+
+    if (coordinator && typeof coordinator.afterVoice === "function") {
+      coordinator.afterVoice();
     }
+  }
 
-    // توقف فایل قبلی بدون آزادکردن موسیقی
+  function playVoice(name) {
+    const filename = files[name];
+
+    if (!filename) return;
+
     stopVoice(false);
 
-    // هماهنگی با استودیوی موسیقی V7
-    const coordinator = window.andishaAudioCoordinator;
-
-    if (!voiceSessionActive) {
-
-      if (
-        coordinator &&
-        typeof coordinator.beforeVoice === "function"
-      ) {
-        coordinator.beforeVoice();
-      }
-
-      voiceSessionActive = true;
-    }
-
-    // توقف گفتار ماشینی
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
+    const token = sessionToken;
 
     currentVoice = name;
+    voiceSessionActive = true;
 
-    audio.src = new URL(
-      "./assets/audio/" + filename,
-      document.baseURI
-    ).href;
+    const coordinator = getCoordinator();
 
-    setStatus("🎧 صدای اندیشا در حال پخش است.");
+    if (coordinator && typeof coordinator.beforeVoice === "function") {
+      coordinator.beforeVoice();
+    }
+
+    if ("speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {}
+    }
+
+    audio.src = "./assets/audio/" + filename;
+    audio.currentTime = 0;
 
     const playPromise = audio.play();
 
     if (playPromise && typeof playPromise.catch === "function") {
-
-      playPromise.catch(function(error) {
-
-        console.warn("خطای پخش فایل صوتی:", error);
-
-        if (currentVoice === name) {
-          finishVoice("پخش صدا انجام نشد؛ فایل را بررسی کن.");
-        }
-
+      playPromise.catch(function () {
+        if (token !== sessionToken) return;
+        finishVoice(token);
       });
     }
   }
 
-  // پایان طبیعی فایل
-  audio.addEventListener("ended", function() {
-    finishVoice("پخش صدا پایان یافت. 🌟");
-  });
+  function playZoneVoice(index) {
+    index = Number(index);
 
-  // خطای فایل
-  audio.addEventListener("error", function() {
+    if (!Number.isInteger(index)) return;
+    if (index < 0 || index >= zoneVoices.length) return;
 
-    if (!currentVoice) return;
+    lastZone = index;
+    playVoice(zoneVoices[index]);
+  }
 
-    console.error("Andisha audio error:", audio.src);
+  function getZoneIndex(button) {
+    if (!button) return -1;
 
-    finishVoice("خطا در بارگذاری فایل صوتی.");
+    const values = [
+      button.getAttribute("data-index"),
+      button.getAttribute("data-zone-index"),
+      button.getAttribute("data-zone")
+    ];
 
-  });
+    for (let i = 0; i < values.length; i++) {
+      if (values[i] === null) continue;
 
-  // API عمومی
-  window.andishaPlayVoice = playVoice;
-  window.andishaStopVoice = function() {
-    stopVoice(true);
-  };
+      const value = Number(values[i]);
 
-  // ============================================
-  // تشخیص کلیک‌های بازی
-  // ============================================
-
-  function handleGameClick(event) {
-
-    const target = event.target;
-
-    if (!target || typeof target.closest !== "function") {
-      return;
+      if (Number.isInteger(value) && value >= 0 && value <= 4) {
+        return value;
+      }
     }
 
-    const button = target.closest("button[data-action]");
+    return -1;
+  }
 
-    if (!button || button.disabled) return;
+  function handleAppClick(event) {
+    const button = event.target.closest
+      ? event.target.closest("button[data-action]")
+      : null;
 
-    const action = button.dataset.action;
+    if (!button) return;
 
-    // شروع داستان
+    const action = button.getAttribute("data-action");
+
     if (action === "story") {
-
-      if (
-        button.textContent.indexOf("شروع ماجراجویی") !== -1 &&
-        !welcomePlayed
-      ) {
-
+      if (!welcomePlayed) {
         welcomePlayed = true;
         playVoice("welcome");
-
-      } else {
-
-        stopVoice(true);
-
       }
-
       return;
     }
 
-    // بازگشت به شهر
-    if (
-      action === "city" ||
-      action === "reset-progress"
-    ) {
-
+    if (action === "city" || action === "reset-progress") {
+      victoryPlayed = false;
       stopVoice(true);
       return;
     }
 
-    // ورود به ساختمان‌ها
     if (action === "zone") {
+      const index = getZoneIndex(button);
 
-      const index = Number(button.dataset.zone);
-      const voiceName = zoneVoices[index];
-
-      if (voiceName) {
-        playVoice(voiceName);
+      if (index !== -1) {
+        playZoneVoice(index);
       }
-
       return;
     }
 
-    // تکرار صدای مأموریت
     if (action === "replay") {
-
-      const zoneName = button.dataset.zoneName;
-
-      if (
-        audioFiles[zoneName] &&
-        zoneName !== "welcome" &&
-        zoneName !== "victory"
-      ) {
-        playVoice(zoneName);
+      if (lastZone !== -1) {
+        playZoneVoice(lastZone);
       }
-
       return;
     }
 
-    // صدای پیروزی
-    if (
-      action === "tower-answer" &&
-      window.towerCompleted === true
-    ) {
-
-      playVoice("victory");
-      return;
+    if (action === "tower-answer") {
+      if (window.towerCompleted && !victoryPlayed) {
+        victoryPlayed = true;
+        playVoice("victory");
+      }
     }
-
   }
 
-  // اتصال به بازی اصلی
-  function attachToApp() {
+  audio.addEventListener("ended", function () {
+    finishVoice(sessionToken);
+  });
 
-    const app = document.getElementById("app");
-
-    if (!app) {
-      console.error("بخش اصلی بازی پیدا نشد.");
-      return;
+  audio.addEventListener("error", function () {
+    if (currentVoice) {
+      finishVoice(sessionToken);
     }
+  });
 
-    if (app.__andishaVoiceV3Attached) return;
+  const app = document.getElementById("app");
 
-    app.__andishaVoiceV3Attached = true;
-
-    app.addEventListener(
-      "click",
-      handleGameClick,
-      false
-    );
-
+  if (app) {
+    app.addEventListener("click", handleAppClick, false);
   }
 
-  attachToApp();
-
-  // توقف هنگام استفاده از راهنمای گفتاری
-  document.addEventListener("click", function(event) {
-
+  document.addEventListener("click", function (event) {
     const target = event.target;
 
-    if (!target || typeof target.closest !== "function") {
-      return;
-    }
+    if (!target || !target.closest) return;
 
     if (
-      target.closest("#andishaRead, #andishaStop")
+      target.closest("#andishaStop") ||
+      target.closest("#andishaRead")
     ) {
       stopVoice(true);
     }
-
   }, true);
 
-  // توقف هنگام خروج
-  window.addEventListener("pagehide", function() {
+  window.addEventListener("pagehide", function () {
     stopVoice(false);
   });
 
-  console.log("ANDISHA VOICE SYSTEM V3 READY");
+  window.andishaPlayVoice = playVoice;
+  window.andishaPlayZoneVoice = playZoneVoice;
+  window.andishaStopVoice = function () {
+    stopVoice(true);
+  };
 
+  window.andishaVoiceStatus = function () {
+    return {
+      playing: voiceSessionActive,
+      current: currentVoice,
+      lastZone: lastZone
+    };
+  };
+
+  console.log("ANDISHA VOICE SYSTEM V4 READY");
 })();
