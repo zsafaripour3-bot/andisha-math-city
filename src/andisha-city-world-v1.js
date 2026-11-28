@@ -2,531 +2,308 @@
 "use strict";
 
 /* ============================================
-   ANDISHA CITY WORLD V1.2
+   ANDISHA CITY WORLD V1.3
    اتصال مستقیم ساختمان‌ها به بازی اصلی
-   افزونه مستقل - بدون تغییر main.js
+   جلوگیری از کلیک واسطه‌ای و صدای تکراری
    ============================================ */
 
 (function () {
-  if (window.__ANDISHA_CITY_WORLD_V1__) return;
-  window.__ANDISHA_CITY_WORLD_V1__ = true;
+  if (window.__ANDISHA_CITY_WORLD_V13__) return;
+  window.__ANDISHA_CITY_WORLD_V13__ = true;
 
   const zones = [
-    { name: "فروشگاه", icon: "🛍️", color: "#ffbd59", index: 0 },
-    { name: "آشپزخانه", icon: "🍰", color: "#ff8eae", index: 1 },
-    { name: "بانک", icon: "🏦", color: "#65c9c2", index: 2 },
-    { name: "کارگاه نقشه", icon: "📐", color: "#8eabff", index: 3 },
-    { name: "برج هوشمند", icon: "🏰", color: "#b99aff", index: 4 }
+    { name: "فروشگاه", icon: "🛍️", color: "#ff9f43" },
+    { name: "آشپزخانه", icon: "🍳", color: "#20bf9f" },
+    { name: "بانک", icon: "🏦", color: "#4b8cf5" },
+    { name: "نقشه", icon: "🗺️", color: "#a477ed" },
+    { name: "برج", icon: "🏙️", color: "#ef6b9b" }
   ];
 
-  function addStyles() {
-    if (document.getElementById("andisha-city-world-style")) return;
+  const style = document.createElement("style");
 
-    const style = document.createElement("style");
-    style.id = "andisha-city-world-style";
-
-    style.textContent = `
-      #andisha-city-launcher {
-        position: fixed;
-        z-index: 9998;
-        bottom: 85px;
-        right: 16px;
-        border: 2px solid rgba(255,255,255,.9);
-        border-radius: 20px;
-        padding: 13px 18px;
-        background: linear-gradient(135deg,#183c79,#386bd0);
-        color: white;
-        font-family: inherit;
-        font-size: 14px;
-        font-weight: 900;
-        box-shadow: 0 8px 25px #142b5260;
-        cursor: pointer;
-        transition: transform .2s ease;
-      }
-
-      #andisha-city-launcher:active {
-        transform: scale(.96);
-      }
-
-      #andisha-city-world {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        display: none;
-        overflow-y: auto;
-        direction: rtl;
-        background:
-          radial-gradient(circle at 15% 15%,#fff7bd 0 2%,transparent 18%),
-          linear-gradient(160deg,#8bd8f7,#d2efff 48%,#a6dfbb);
-        font-family: inherit;
-        color: #19345c;
-      }
-
-      #andisha-city-world.open {
-        display: block;
-        animation: acw-enter .4s ease;
-      }
-
-      @keyframes acw-enter {
-        from { opacity: 0; transform: scale(.97); }
-        to { opacity: 1; transform: scale(1); }
-      }
-
-      .acw-header {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        padding: 13px 16px;
-        background: #ffffffd9;
-        backdrop-filter: blur(12px);
-        box-shadow: 0 3px 14px #24466b20;
-      }
-
-      .acw-title {
-        font-size: 19px;
-        font-weight: 900;
-      }
-
-      .acw-close {
-        border: 0;
-        border-radius: 12px;
-        padding: 9px 14px;
-        background: #193b70;
-        color: white;
-        font-size: 15px;
-        cursor: pointer;
-      }
-
-      .acw-subtitle {
-        text-align: center;
-        padding: 14px 10px 0;
-        font-weight: bold;
-        color: #234c77;
-      }
-
-      .acw-sky {
-        position: relative;
-        min-height: 570px;
-        max-width: 850px;
-        margin: auto;
-        padding: 35px 12px 60px;
-        overflow: hidden;
-      }
-
-      .acw-sun {
-        position: absolute;
-        top: 25px;
-        left: 12%;
-        width: 72px;
-        height: 72px;
-        border-radius: 50%;
-        background: #ffe27a;
-        box-shadow: 0 0 35px #fff2a7;
-        animation: acw-sun 4s ease-in-out infinite alternate;
-      }
-
-      @keyframes acw-sun {
-        to { transform: scale(1.12); }
-      }
-
-      .acw-cloud {
-        position: absolute;
-        color: white;
-        font-size: 44px;
-        opacity: .85;
-        animation: acw-cloud 18s linear infinite alternate;
-      }
-
-      .acw-cloud.one { top: 60px; right: 8%; }
-      .acw-cloud.two { top: 135px; left: 12%; animation-delay: -7s; }
-
-      @keyframes acw-cloud {
-        to { transform: translateX(35px); }
-      }
-
-      .acw-ground {
-        position: absolute;
-        inset: 180px 2% 0;
-        border-radius: 48% 48% 15px 15px;
-        background: radial-gradient(ellipse at 50% 45%,#a9e6a5,#70c88f 70%);
-        box-shadow: inset 0 12px 25px #ffffff50,
-                    0 18px 35px #327c6c30;
-        transform: perspective(700px) rotateX(12deg);
-      }
-
-      .acw-road {
-        position: absolute;
-        top: 340px;
-        left: -10%;
-        width: 120%;
-        height: 78px;
-        transform: rotate(-10deg);
-        border-top: 7px solid #ffffffb0;
-        border-bottom: 7px solid #ffffffb0;
-        background: #7894a9;
-        box-shadow: 0 8px 15px #315b6040;
-      }
-
-      .acw-road::after {
-        content: "";
-        position: absolute;
-        top: 34px;
-        left: 0;
-        width: 100%;
-        border-top: 4px dashed #fff4b5;
-      }
-
-      .acw-buildings {
-        position: relative;
-        z-index: 3;
-        display: grid;
-        grid-template-columns: repeat(3,minmax(85px,1fr));
-        gap: 32px 18px;
-        max-width: 590px;
-        margin: 45px auto 0;
-        padding: 20px 12px;
-      }
-
-      .acw-building {
-        position: relative;
-        min-height: 130px;
-        border: 0;
-        background: transparent;
-        cursor: pointer;
-        color: #17385e;
-        transition: transform .25s ease;
-      }
-
-      .acw-building:hover {
-        transform: translateY(-8px) scale(1.04);
-      }
-
-      .acw-building:active {
-        transform: scale(.95);
-      }
-
-      .acw-house {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 84px;
-        margin: 0 9px 10px;
-        border: 3px solid #ffffff;
-        border-radius: 12px 12px 5px 5px;
-        background: var(--house-color);
-        box-shadow: 9px 9px 0 var(--house-side),
-                    0 12px 20px #27576a45;
-        transform: skewY(-3deg);
-      }
-
-      .acw-house::before {
-        content: "";
-        position: absolute;
-        top: -25px;
-        left: -5px;
-        right: -5px;
-        height: 29px;
-        border: 3px solid #ffffff;
-        border-radius: 12px 12px 2px 2px;
-        background: var(--house-roof);
-        clip-path: polygon(50% 0,100% 100%,0 100%);
-      }
-
-      .acw-house::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        width: 19px;
-        height: 31px;
-        border-radius: 7px 7px 0 0;
-        background: #ffffffb8;
-        border: 2px solid #ffffff;
-      }
-
-      .acw-building:nth-child(2) .acw-house { height: 105px; }
-      .acw-building:nth-child(3) .acw-house { height: 92px; }
-      .acw-building:nth-child(4) .acw-house { height: 78px; }
-      .acw-building:nth-child(5) .acw-house { height: 118px; }
-
-      .acw-building:nth-child(5) .acw-house::before {
-        background: #7056bc;
-      }
-
-      .acw-icon {
-        position: relative;
-        z-index: 2;
-        font-size: 32px;
-        filter: drop-shadow(0 3px 2px #24334b40);
-      }
-
-      .acw-label {
-        display: inline-block;
-        margin-top: 7px;
-        padding: 6px 9px;
-        border-radius: 12px;
-        background: #ffffffed;
-        box-shadow: 0 4px 10px #315c6330;
-        font-weight: 900;
-        font-size: 12px;
-        white-space: nowrap;
-      }
-
-      .acw-tree {
-        position: absolute;
-        z-index: 4;
-        font-size: 35px;
-        animation: acw-tree 2.5s ease-in-out infinite alternate;
-      }
-
-      @keyframes acw-tree {
-        to { transform: rotate(4deg); }
-      }
-
-      .acw-tree.t1 { top: 290px; left: 5%; }
-      .acw-tree.t2 { top: 440px; right: 5%; }
-      .acw-tree.t3 { top: 485px; left: 13%; }
-
-      .acw-footer {
-        position: relative;
-        z-index: 5;
-        margin: 0 12px 25px;
-        padding: 14px;
-        border-radius: 18px;
-        background: #ffffffd9;
-        text-align: center;
-        font-weight: bold;
-        box-shadow: 0 5px 18px #315c6330;
-      }
-
-      .acw-toast {
-        position: fixed;
-        z-index: 10001;
-        bottom: 85px;
-        left: 50%;
-        transform: translateX(-50%);
-        max-width: 90%;
-        padding: 12px 18px;
-        border-radius: 14px;
-        background: #183c79;
-        color: white;
-        text-align: center;
-        box-shadow: 0 5px 18px #142b5260;
-      }
-
-      @media(max-width:430px) {
-        .acw-sky { min-height: 590px; }
-        .acw-buildings {
-          gap: 25px 8px;
-          padding: 15px 5px;
-        }
-        .acw-building { min-height: 125px; }
-        .acw-label { font-size: 11px; }
-        .acw-title { font-size: 16px; }
-      }
-
-      @media(prefers-reduced-motion: reduce) {
-        #andisha-city-world *,
-        #andisha-city-world *::before,
-        #andisha-city-world *::after {
-          animation: none !important;
-          transition: none !important;
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
-  }
-
-  function showToast(message) {
-    const old = document.querySelector(".acw-toast");
-    if (old) old.remove();
-
-    const toast = document.createElement("div");
-    toast.className = "acw-toast";
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    window.setTimeout(function () {
-      toast.remove();
-    }, 2600);
-  }
-
-  function openCity() {
-    const city = document.getElementById("andisha-city-world");
-
-    if (city) {
-      city.classList.add("open");
-      document.body.style.overflow = "hidden";
-    }
-  }
-
-  function closeCity() {
-    const city = document.getElementById("andisha-city-world");
-
-    if (city) {
-      city.classList.remove("open");
+  style.textContent = `
+    #andisha-city-launcher {
+      position: fixed;
+      right: 16px;
+      bottom: 85px;
+      z-index: 9998;
+      border: 2px solid rgba(255,255,255,.8);
+      border-radius: 18px;
+      padding: 11px 15px;
+      color: #fff;
+      background: linear-gradient(135deg,#1765b8,#17336d);
+      box-shadow: 0 5px 18px rgba(0,0,0,.25);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
     }
 
-    document.body.style.overflow = "";
-  }
+    #andisha-city-world {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      overflow-y: auto;
+      padding: 22px 14px;
+      box-sizing: border-box;
+      background:
+        radial-gradient(circle at 20% 15%,#fff5b7 0,transparent 28%),
+        linear-gradient(160deg,#8bd9ff,#c8eaff 48%,#b5edc7);
+      font-family: inherit;
+    }
 
-  /* اتصال ساختمان به فرمان اصلی main.js */
-  function enterMainZone(index) {
-    const app = document.getElementById("app");
+    #andisha-city-world.open {
+      display: block;
+    }
 
-    if (!app) return false;
+    #andisha-city-world .world-header {
+      max-width: 650px;
+      margin: 10px auto 22px;
+      padding: 16px;
+      text-align: center;
+      color: #17336d;
+      background: rgba(255,255,255,.85);
+      border-radius: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,.1);
+    }
 
-    // اگر دکمه اصلی وجود دارد، همان را اجرا کن
-    const originalButton = Array.from(
-      app.querySelectorAll('button[data-action="zone"]')
-    ).find(function (button) {
-      return Number(button.dataset.zone) === index;
+    #andisha-city-world .world-header h2 {
+      margin: 0 0 7px;
+      font-size: 22px;
+    }
+
+    #andisha-city-world .world-header p {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    #andisha-city-world .world-buildings {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 14px;
+      max-width: 650px;
+      margin: auto;
+    }
+
+    #andisha-city-world .world-building {
+      min-height: 145px;
+      border: 3px solid rgba(255,255,255,.85);
+      border-radius: 22px;
+      padding: 15px 8px;
+      color: #17336d;
+      background: rgba(255,255,255,.9);
+      box-shadow: 0 7px 0 rgba(30,75,120,.16),
+                  0 10px 20px rgba(0,0,0,.12);
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform .15s ease;
+    }
+
+    #andisha-city-world .world-building:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 rgba(30,75,120,.16);
+    }
+
+    #andisha-city-world .world-building .building-icon {
+      display: block;
+      font-size: 48px;
+      margin-bottom: 9px;
+    }
+
+    #andisha-city-world .world-building strong {
+      display: block;
+      font-size: 17px;
+    }
+
+    #andisha-city-world .world-building small {
+      display: block;
+      margin-top: 6px;
+      color: #63758c;
+      font-size: 11px;
+    }
+
+    #andisha-city-world .world-building:last-child {
+      grid-column: 1 / -1;
+      min-height: 125px;
+    }
+
+    #andisha-city-world .world-close {
+      display: block;
+      margin: 25px auto 10px;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 28px;
+      color: #fff;
+      background: #17336d;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    @media (max-width: 360px) {
+      #andisha-city-world .world-buildings {
+        gap: 9px;
+      }
+
+      #andisha-city-world .world-building {
+        min-height: 125px;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  const launcher = document.createElement("button");
+  launcher.id = "andisha-city-launcher";
+  launcher.type = "button";
+  launcher.textContent = "🏙️ شهر سه‌بعدی";
+
+  const world = document.createElement("div");
+  world.id = "andisha-city-world";
+
+  world.innerHTML = `
+    <div class="world-header">
+      <h2>🏙️ شهر هوشمند اندیشا</h2>
+      <p>برای ورود به هر بخش، ساختمان آن را انتخاب کن.</p>
+    </div>
+
+    <div class="world-buildings"></div>
+
+    <button class="world-close" type="button">
+      بازگشت به بازی ✨
+    </button>
+  `;
+
+  const buildings = world.querySelector(".world-buildings");
+
+  zones.forEach(function (zone, index) {
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = "world-building";
+    button.style.borderBottom = "6px solid " + zone.color;
+
+    button.innerHTML =
+      '<span class="building-icon">' + zone.icon + "</span>" +
+      "<strong>" + zone.name + "</strong>" +
+      "<small>برای ورود لمس کن</small>";
+
+    button.addEventListener("click", function () {
+      enterZone(index);
     });
+
+    buildings.appendChild(button);
+  });
+
+  function openWorld() {
+    world.classList.add("open");
+  }
+
+  function closeWorld() {
+    world.classList.remove("open");
+  }
+
+  function findMainZoneButton(index) {
+    const buttons = document.querySelectorAll(
+      '#app button[data-action="zone"]'
+    );
+
+    for (let i = 0; i < buttons.length; i++) {
+      const button = buttons[i];
+
+      const values = [
+        button.getAttribute("data-index"),
+        button.getAttribute("data-zone-index"),
+        button.getAttribute("data-zone")
+      ];
+
+      for (let j = 0; j < values.length; j++) {
+        if (values[j] !== null && Number(values[j]) === index) {
+          return button;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function enterZone(index) {
+    closeWorld();
+
+    /*
+      مسیر اصلی:
+      استفاده از API خود بازی، بدون کلیک ساختگی.
+      صدای همان ساختمان نیز فقط یک بار اجرا می‌شود.
+    */
+
+    if (typeof window.andishaOpenZone === "function") {
+      window.andishaOpenZone(index);
+
+      if (typeof window.andishaPlayZoneVoice === "function") {
+        window.andishaPlayZoneVoice(index);
+      }
+
+      return;
+    }
+
+    /*
+      مسیر جایگزین برای نسخه‌هایی که API ندارند.
+    */
+
+    const originalButton = findMainZoneButton(index);
 
     if (originalButton) {
       originalButton.click();
-      return true;
+      return;
     }
 
-    // اگر دکمه در صفحه فعلی وجود ندارد،
-    // یک دکمه موقت برای اجرای رویداد اصلی بساز
-    const proxyButton = document.createElement("button");
-
-    proxyButton.type = "button";
-    proxyButton.dataset.action = "zone";
-    proxyButton.dataset.zone = String(index);
-    proxyButton.hidden = true;
-
-    app.appendChild(proxyButton);
-
-    proxyButton.click();
-    proxyButton.remove();
-
-    return true;
+    showMessage("دکمه ورود این ساختمان در بازی پیدا نشد.");
   }
 
-  function createCity() {
-    if (document.getElementById("andisha-city-world")) return;
+  function showMessage(message) {
+    let toast = document.getElementById("andisha-world-toast");
 
-    const overlay = document.createElement("section");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "andisha-world-toast";
 
-    overlay.id = "andisha-city-world";
-    overlay.setAttribute("aria-label", "شهرک سه‌بعدی اندیشا");
+      toast.style.cssText =
+        "position:fixed;z-index:10001;bottom:25px;left:50%;" +
+        "transform:translateX(-50%);background:#17336d;color:white;" +
+        "padding:12px 18px;border-radius:14px;font-family:inherit;" +
+        "font-size:13px;max-width:85%;text-align:center;";
 
-    overlay.innerHTML = `
-      <header class="acw-header">
-        <div class="acw-title">🏙️ شهرک هوشمند اندیشا</div>
-        <button class="acw-close" type="button">✕ بستن</button>
-      </header>
+      document.body.appendChild(toast);
+    }
 
-      <div class="acw-subtitle">
-        به شهر رنگارنگ اندیشا خوش آمدی! ✨
-      </div>
+    toast.textContent = message;
+    toast.style.display = "block";
 
-      <div class="acw-sky">
-        <div class="acw-sun"></div>
-        <div class="acw-cloud one">☁️</div>
-        <div class="acw-cloud two">☁️</div>
-        <div class="acw-ground"></div>
-        <div class="acw-road"></div>
-
-        <span class="acw-tree t1">🌳</span>
-        <span class="acw-tree t2">🌲</span>
-        <span class="acw-tree t3">🌳</span>
-
-        <div class="acw-buildings">
-          ${zones.map(function (zone) {
-            return `
-              <button class="acw-building"
-                type="button"
-                data-zone-index="${zone.index}"
-                aria-label="ورود به ${zone.name}">
-                <span class="acw-house"
-                  style="
-                    --house-color:${zone.color};
-                    --house-side:${zone.color}99;
-                    --house-roof:${zone.color};
-                  ">
-                  <span class="acw-icon">${zone.icon}</span>
-                </span>
-                <span class="acw-label">${zone.name}</span>
-              </button>
-            `;
-          }).join("")}
-        </div>
-      </div>
-
-      <div class="acw-footer">
-        🌟 هر ساختمان یک ماجراجویی تازه است!
-        <br>
-        <small>اندیشا | فناوری در خدمت آموزش</small>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    overlay.querySelector(".acw-close").addEventListener(
-      "click",
-      closeCity
-    );
-
-    overlay.addEventListener("click", function (event) {
-      const target = event.target;
-
-      if (!target || typeof target.closest !== "function") return;
-
-      const building = target.closest("[data-zone-index]");
-
-      if (!building) return;
-
-      const index = Number(building.dataset.zoneIndex);
-
-      if (!Number.isInteger(index) || index < 0 || index > 4) {
-        showToast("ساختمان انتخاب‌شده معتبر نیست.");
-        return;
-      }
-
-      closeCity();
-
-      const success = enterMainZone(index);
-
-      if (!success) {
-        showToast("بخش اصلی بازی در دسترس نیست.");
-      }
-    });
+    window.setTimeout(function () {
+      toast.style.display = "none";
+    }, 2500);
   }
 
-  function init() {
-    addStyles();
-    createCity();
+  launcher.addEventListener("click", openWorld);
 
-    if (document.getElementById("andisha-city-launcher")) return;
+  world.querySelector(".world-close").addEventListener(
+    "click",
+    closeWorld
+  );
 
-    const launcher = document.createElement("button");
+  world.addEventListener("click", function (event) {
+    if (event.target === world) {
+      closeWorld();
+    }
+  });
 
-    launcher.id = "andisha-city-launcher";
-    launcher.type = "button";
-    launcher.textContent = "🏙️ شهرک سه‌بعدی";
+  document.body.appendChild(launcher);
+  document.body.appendChild(world);
 
-    launcher.addEventListener("click", openCity);
+  window.andishaOpenCityWorld = openWorld;
+  window.andishaCloseCityWorld = closeWorld;
 
-    document.body.appendChild(launcher);
-
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") closeCity();
-    });
-
-    console.log("ANDISHA CITY WORLD V1.2 READY");
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
+  console.log("ANDISHA CITY WORLD V1.3 READY");
 })();
